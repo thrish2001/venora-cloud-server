@@ -1,14 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { parse } = require('csv-parse/sync');
 const fs = require('fs');
 const pool = require('../db');
 require('dotenv').config();
 
 const upload = multer({ dest: 'uploads_temp/' });
 
-// Middleware: check API key
 function checkApiKey(req, res, next) {
   const key = req.headers['x-api-key'];
   if (key !== process.env.API_SECRET_KEY) {
@@ -22,28 +20,44 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
   if (!site_id || !req.file) {
     return res.status(400).json({ error: 'site_id and file are required' });
   }
+
   try {
     const content = fs.readFileSync(req.file.path, 'utf8');
-    const records = parse(content, {
-      columns: true, skip_empty_lines: true, trim: true
-    });
+
+    // Split into lines and clean them
+    const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    // Extract breaker name from row 1 (e.g. "125_Breaker")
+    const firstRowCols = lines[0].replace(/"/g, '').split(',');
+    const breakerName = firstRowCols[1] ? firstRowCols[1].trim() : 'Unknown';
+
+    // Data starts at row 4 (index 4) — skip rows 0,1,2,3
+    const dataLines = lines.slice(4);
 
     const client = await pool.connect();
     let inserted = 0;
+
     try {
-      for (const row of records) {
-        // Adjust these column names to match your Dirisdigiware CSV headers
+      for (const line of dataLines) {
+        const cols = line.replace(/"/g, '').split(',');
+        const dateStr = cols[0] ? cols[0].trim() : null;
+        const valueStr = cols[2] ? cols[2].trim() : null;
+
+        if (!dateStr || !valueStr) continue;
+
+        const kwh = parseFloat(valueStr);
+        if (isNaN(kwh)) continue;
+
+        // Convert date format from 2026/06/01 to proper timestamp
+        const recorded_at = new Date(dateStr.replace(/\//g, '-'));
+        if (isNaN(recorded_at.getTime())) continue;
+
         await client.query(
           `INSERT INTO energy_readings
            (site_id, breaker_name, recorded_at, kwh, kva, voltage)
-           VALUES ($1,$2,$3,$4,$5,$6)
+           VALUES ($1, $2, $3, $4, $5, $6)
            ON CONFLICT DO NOTHING`,
-          [
-            parseInt(site_id),
-            row['Breaker'] || row['Circuit'] || row['Name'] || 'Unknown',
-            row['Timestamp'] || row['DateTime'] || row['Date'] || new Date(),
-            parseFloat(row['kWh'] || row['Energy'] || 0),
-          ]
+          [parseInt(site_id), breakerName, recorded_at, kwh, null, null]
         );
         inserted++;
       }
@@ -51,8 +65,9 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
       client.release();
     }
 
-    fs.unlinkSync(req.file.path); // delete temp file
-    res.json({ success: true, rows_inserted: inserted });
+    fs.unlinkSync(req.file.path);
+    res.json({ success: true, rows_inserted: inserted, breaker: breakerName });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
