@@ -10,7 +10,7 @@ app.use(express.json());
 // Load routes
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/analytics', require('./routes/analytics'));
-
+app.use('/api/sites', require('./routes/sites'));
 // Health check — visit this URL to confirm the server is running
 app.get('/', (req, res) => {
   res.json({ status: 'Venora Cloud Server is running', version: '1.0' });
@@ -76,3 +76,4 @@ app.listen(PORT, async () => {
   await initDB();
   console.log('Server running on port ' + PORT);
 });
+app.use('/api/sites', require('./routes/sites'));
