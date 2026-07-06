@@ -6,7 +6,10 @@ async function calculateCosts(site_id) {
     const tariffResult = await client.query(
       'SELECT * FROM tariff_config WHERE site_id = $1', [site_id]
     );
-    if (tariffResult.rows.length === 0) return;
+    if (tariffResult.rows.length === 0) {
+      console.log(`No tariff found for site ${site_id}`);
+      return;
+    }
     const t = tariffResult.rows[0];
 
     const readings = await client.query(
