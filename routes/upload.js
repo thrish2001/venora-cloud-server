@@ -66,7 +66,19 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
     }
 
     fs.unlinkSync(req.file.path);
-    res.json({ success: true, rows_inserted: inserted, breaker: breakerName });
+
+// Auto-calculate costs after upload
+try {
+  await calculateCosts(parseInt(site_id));
+} catch (calcErr) {
+  console.error('Cost calc error:', calcErr.message);
+}
+try {
+  await calculateCosts(parseInt(site_id));
+} catch (calcErr) {
+  console.error('Cost calc error:', calcErr.message);
+}
+res.json({ success: true, rows_inserted: inserted, breaker: breakerName });
 
   } catch (err) {
     console.error(err);
@@ -75,3 +87,4 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
 });
 
 module.exports = router;
+const { calculateCosts } = require('../costCalculator');
