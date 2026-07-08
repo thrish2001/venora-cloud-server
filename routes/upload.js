@@ -25,63 +25,103 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
   try {
     const content = fs.readFileSync(req.file.path, 'utf8');
     const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-
-    const row1 = lines[0].replace(/"/g, '').split(',');
-    const measurementType = (row1[0] || '').trim();
-    const breakerName     = (row1[1] || 'Unknown').trim();
-
-    const row2 = lines[1].replace(/"/g, '').split(',');
-    const label    = (row2[0] || '').trim().toLowerCase();
-    const totalVal = parseFloat(row2[1] || 0);
-    const unit     = (row2[2] || '').trim().toLowerCase();
-
-    if (label !== 'total' || isNaN(totalVal)) {
-      fs.unlinkSync(req.file.path);
-      return res.status(400).json({ error: 'Could not find Total row in CSV' });
-    }
-
-    let recorded_at = new Date();
     const filename = req.file.originalname || '';
-    const dateMatch = filename.match(/(\d{4}-\d{2}-\d{2})/);
-    if (dateMatch) {
-      recorded_at = new Date(dateMatch[1]);
-    }
-
-    const isKwh = unit.includes('kwh') || measurementType.toLowerCase().includes('ea');
-    const isKva = unit.includes('kva') || measurementType.toLowerCase().includes('demand');
-
     const client = await pool.connect();
-    try {
-      if (isKwh) {
-        await client.query(
-          `INSERT INTO energy_readings
-           (site_id, breaker_name, recorded_at, kwh, kva, voltage)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [parseInt(site_id), breakerName, recorded_at, totalVal, null, null]
-        );
-      } else if (isKva) {
-        const existing = await client.query(
-          `SELECT id FROM energy_readings
-           WHERE site_id=$1 AND breaker_name=$2
-           AND DATE(recorded_at) = DATE($3)
-           ORDER BY uploaded_at DESC LIMIT 1`,
-          [parseInt(site_id), breakerName, recorded_at]
-        );
+    let result = {};
 
-        if (existing.rows.length > 0) {
+    try {
+      // ── TRENDS FILE (15-minute interval data) ──────────────────
+      if (filename.includes('Trends')) {
+        // Row 1 is header: Local Time, Time (UTC), breaker:kvar, breaker:kVA, breaker:kW
+        const headers = lines[0].split('\t');
+
+        // Extract breaker name from header column 2
+        const breakerRaw = headers[2] || '';
+        const breakerName = breakerRaw.split(':')[0].trim() || '125_Breaker';
+
+        let inserted = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split('\t');
+          if (cols.length < 5) continue;
+
+          const recorded_at = new Date(cols[0].trim());
+          if (isNaN(recorded_at.getTime())) continue;
+
+          const kva = parseFloat(cols[3]) || null;  // column 4 = kVA
+          const kw  = parseFloat(cols[4]) || null;  // column 5 = kW
+
           await client.query(
-            `UPDATE energy_readings SET kva=$1 WHERE id=$2`,
-            [totalVal, existing.rows[0].id]
+            `INSERT INTO energy_readings
+             (site_id, breaker_name, recorded_at, kwh, kva, voltage)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT DO NOTHING`,
+            [parseInt(site_id), breakerName, recorded_at, kw, kva, null]
           );
-        } else {
+          inserted++;
+        }
+
+        result = { success: true, type: 'Trends', rows_inserted: inserted, breaker: breakerName };
+
+      // ── INDEX FILE (weekly summary with Total row) ──────────────
+      } else {
+        const row1 = lines[0].replace(/"/g, '').split(',');
+        const measurementType = (row1[0] || '').trim();
+        const breakerName     = (row1[1] || 'Unknown').trim();
+
+        const row2 = lines[1].replace(/"/g, '').split(',');
+        const label    = (row2[0] || '').trim().toLowerCase();
+        const totalVal = parseFloat(row2[1] || 0);
+        const unit     = (row2[2] || '').trim().toLowerCase();
+
+        if (label !== 'total' || isNaN(totalVal)) {
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({ error: 'Could not find Total row in CSV' });
+        }
+
+        let recorded_at = new Date();
+        const dateMatch = filename.match(/(\d{4}-\d{2}-\d{2})/);
+        if (dateMatch) recorded_at = new Date(dateMatch[1]);
+
+        const isKwh = unit.includes('kwh') || measurementType.toLowerCase().includes('ea');
+        const isKva = unit.includes('kva') || measurementType.toLowerCase().includes('demand');
+
+        if (isKwh) {
           await client.query(
             `INSERT INTO energy_readings
              (site_id, breaker_name, recorded_at, kwh, kva, voltage)
              VALUES ($1, $2, $3, $4, $5, $6)`,
-            [parseInt(site_id), breakerName, recorded_at, null, totalVal, null]
+            [parseInt(site_id), breakerName, recorded_at, totalVal, null, null]
           );
+        } else if (isKva) {
+          const existing = await client.query(
+            `SELECT id FROM energy_readings
+             WHERE site_id=$1 AND breaker_name=$2
+             AND DATE(recorded_at) = DATE($3)
+             ORDER BY uploaded_at DESC LIMIT 1`,
+            [parseInt(site_id), breakerName, recorded_at]
+          );
+
+          if (existing.rows.length > 0) {
+            await client.query(
+              `UPDATE energy_readings SET kva=$1 WHERE id=$2`,
+              [totalVal, existing.rows[0].id]
+            );
+          } else {
+            await client.query(
+              `INSERT INTO energy_readings
+               (site_id, breaker_name, recorded_at, kwh, kva, voltage)
+               VALUES ($1, $2, $3, $4, $5, $6)`,
+              [parseInt(site_id), breakerName, recorded_at, null, totalVal, null]
+            );
+          }
         }
+
+        result = {
+          success: true, type: isKwh ? 'kWh' : 'kVA',
+          total_value: totalVal, unit, breaker: breakerName
+        };
       }
+
     } finally {
       client.release();
     }
@@ -94,14 +134,7 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
       console.error('Cost calc error:', calcErr.message);
     }
 
-    res.json({
-      success: true,
-      breaker: breakerName,
-      type: isKwh ? 'kWh' : isKva ? 'kVA' : 'Unknown',
-      total_value: totalVal,
-      unit: unit,
-      recorded_date: recorded_at
-    });
+    res.json(result);
 
   } catch (err) {
     console.error(err);
