@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const fs = require('fs');
 const pool = require('../db');
+const { calculateCosts } = require('../costCalculator');
 require('dotenv').config();
 
 const upload = multer({ dest: 'uploads_temp/' });
@@ -23,43 +24,63 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
 
   try {
     const content = fs.readFileSync(req.file.path, 'utf8');
-
-    // Split into lines and clean them
     const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-    // Extract breaker name from row 1 (e.g. "125_Breaker")
-    const firstRowCols = lines[0].replace(/"/g, '').split(',');
-    const breakerName = firstRowCols[1] ? firstRowCols[1].trim() : 'Unknown';
+    const row1 = lines[0].replace(/"/g, '').split(',');
+    const measurementType = (row1[0] || '').trim();
+    const breakerName     = (row1[1] || 'Unknown').trim();
 
-    // Data starts at row 4 (index 4) — skip rows 0,1,2,3
-    const dataLines = lines.slice(4);
+    const row2 = lines[1].replace(/"/g, '').split(',');
+    const label    = (row2[0] || '').trim().toLowerCase();
+    const totalVal = parseFloat(row2[1] || 0);
+    const unit     = (row2[2] || '').trim().toLowerCase();
+
+    if (label !== 'total' || isNaN(totalVal)) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: 'Could not find Total row in CSV' });
+    }
+
+    let recorded_at = new Date();
+    const filename = req.file.originalname || '';
+    const dateMatch = filename.match(/(\d{4}-\d{2}-\d{2})/);
+    if (dateMatch) {
+      recorded_at = new Date(dateMatch[1]);
+    }
+
+    const isKwh = unit.includes('kwh') || measurementType.toLowerCase().includes('ea');
+    const isKva = unit.includes('kva') || measurementType.toLowerCase().includes('demand');
 
     const client = await pool.connect();
-    let inserted = 0;
-
     try {
-      for (const line of dataLines) {
-        const cols = line.replace(/"/g, '').split(',');
-        const dateStr = cols[0] ? cols[0].trim() : null;
-        const valueStr = cols[2] ? cols[2].trim() : null;
-
-        if (!dateStr || !valueStr) continue;
-
-        const kwh = parseFloat(valueStr);
-        if (isNaN(kwh)) continue;
-
-        // Convert date format from 2026/06/01 to proper timestamp
-        const recorded_at = new Date(dateStr.replace(/\//g, '-'));
-        if (isNaN(recorded_at.getTime())) continue;
-
+      if (isKwh) {
         await client.query(
           `INSERT INTO energy_readings
            (site_id, breaker_name, recorded_at, kwh, kva, voltage)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           ON CONFLICT DO NOTHING`,
-          [parseInt(site_id), breakerName, recorded_at, kwh, null, null]
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [parseInt(site_id), breakerName, recorded_at, totalVal, null, null]
         );
-        inserted++;
+      } else if (isKva) {
+        const existing = await client.query(
+          `SELECT id FROM energy_readings
+           WHERE site_id=$1 AND breaker_name=$2
+           AND DATE(recorded_at) = DATE($3)
+           ORDER BY uploaded_at DESC LIMIT 1`,
+          [parseInt(site_id), breakerName, recorded_at]
+        );
+
+        if (existing.rows.length > 0) {
+          await client.query(
+            `UPDATE energy_readings SET kva=$1 WHERE id=$2`,
+            [totalVal, existing.rows[0].id]
+          );
+        } else {
+          await client.query(
+            `INSERT INTO energy_readings
+             (site_id, breaker_name, recorded_at, kwh, kva, voltage)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [parseInt(site_id), breakerName, recorded_at, null, totalVal, null]
+          );
+        }
       }
     } finally {
       client.release();
@@ -67,18 +88,20 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
 
     fs.unlinkSync(req.file.path);
 
-// Auto-calculate costs after upload
-try {
-  await calculateCosts(parseInt(site_id));
-} catch (calcErr) {
-  console.error('Cost calc error:', calcErr.message);
-}
-try {
-  await calculateCosts(parseInt(site_id));
-} catch (calcErr) {
-  console.error('Cost calc error:', calcErr.message);
-}
-res.json({ success: true, rows_inserted: inserted, breaker: breakerName });
+    try {
+      await calculateCosts(parseInt(site_id));
+    } catch (calcErr) {
+      console.error('Cost calc error:', calcErr.message);
+    }
+
+    res.json({
+      success: true,
+      breaker: breakerName,
+      type: isKwh ? 'kWh' : isKva ? 'kVA' : 'Unknown',
+      total_value: totalVal,
+      unit: unit,
+      recorded_date: recorded_at
+    });
 
   } catch (err) {
     console.error(err);
@@ -87,4 +110,3 @@ res.json({ success: true, rows_inserted: inserted, breaker: breakerName });
 });
 
 module.exports = router;
-const { calculateCosts } = require('../costCalculator');
