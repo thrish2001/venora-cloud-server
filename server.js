@@ -3,7 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const pool = require('./db');
 const { calculateCosts } = require('./costCalculator');
-app.use(express.static('public'));
+app.use(express.json());
 
 
 // Load routes
