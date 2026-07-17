@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dirisdigiware — Energy Analytics</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#C9A347;--gold-d:#9A7A2E;--gold-l:#F0E0A8;--bg:#08090F;--card:#10141F;--card2:#131829;--inp:#181D2C;--border:#1E2840;--text:#F0EDE6;--muted:#6B7191;--sub:#9499B5;--peak:#E05A5A;--day:#C9A347;--op:#4CAF7D;--blue:#5A9EE0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;flex-shrink:0}
+.brand-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);letter-spacing:1px}
+.brand-sep{color:var(--border);margin:0 10px}
+.brand-sub{font-size:11px;color:var(--muted);letter-spacing:1px}
+.topbar-r{display:flex;align-items:center;gap:10px}
+.badge{background:var(--inp);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--sub)}
+.btn-sm{background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;transition:all .15s}
+.btn-sm:hover{border-color:var(--gold-d);color:var(--gold)}
+.controls{background:var(--card2);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0}
+.ctrl-lbl{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.dt{background:var(--inp);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-family:'Inter',sans-serif;font-size:12px;color:var(--text);outline:none;transition:border-color .15s}
+.dt:focus{border-color:var(--gold-d)}
+.pb{background:var(--inp);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+.pb:hover,.pb.active{background:rgba(201,163,71,.12);border-color:var(--gold-d);color:var(--gold)}
+.vt{display:flex;background:var(--inp);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.vb{padding:6px 12px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:'Inter',sans-serif;transition:all .15s}
+.vb.active{background:rgba(201,163,71,.15);color:var(--gold)}
+.btn-load{background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:8px;padding:7px 16px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#000;cursor:pointer;transition:opacity .15s;margin-left:auto}
+.btn-load:hover{opacity:.85}
+.sep{width:1px;height:24px;background:var(--border);margin:0 4px}
+.content{flex:1;padding:20px 24px;overflow-y:auto}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:border-color .2s}
+.kc:hover{border-color:var(--gold-d)}
+.kc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .2s}
+.kc:hover::after{opacity:1}
+.kc.g::after{background:var(--gold)}.kc.p::after{background:var(--peak)}.kc.d::after{background:var(--day)}.kc.o::after{background:var(--op)}.kc.b::after{background:var(--blue)}
+.kdot{width:8px;height:8px;border-radius:50%;margin-bottom:10px}
+.kdot.g{background:var(--gold)}.kdot.p{background:var(--peak)}.kdot.d{background:var(--day)}.kdot.o{background:var(--op)}.kdot.b{background:var(--blue)}
+.klbl{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.kval{font-size:22px;font-weight:700;line-height:1;margin-bottom:4px}
+.kval .u{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
+.ksub{font-size:10px;color:var(--muted)}
+.cr{display:grid;gap:12px;margin-bottom:12px}
+.cr2{grid-template-columns:2fr 1fr}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.ch{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.ct{font-size:13px;font-weight:600}
+.cs{font-size:10px;color:var(--muted);margin-top:3px}
+.cw{position:relative}
+.leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sub)}
+.ld{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.ov{position:fixed;inset:0;background:rgba(8,9,15,.8);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);display:none}
+.ob{text-align:center}
+.sp{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ob p{font-size:13px;color:var(--muted)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.cr2{grid-template-columns:1fr}}
+@media(max-width:600px){.controls,.content,.topbar{padding-left:12px;padding-right:12px}.kpi-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="ov" id="ov"><div class="ob"><div class="sp"></div><p>Loading energy data...</p></div></div>
+<div class="topbar">
+  <div style="display:flex;align-items:center">
+    <span class="brand-name">Dirisdigiware</span>
+    <span class="brand-sep">|</span>
+    <span class="brand-sub">VENORA LANKA POWER PANELS</span>
+  </div>
+  <div class="topbar-r">
+    <div class="badge" id="siteBadge">Site 1</div>
+    <div class="badge" id="userBadge">Admin</div>
+    <button class="btn-sm" onclick="logout()">Sign Out</button>
+  </div>
+</div>
+<div class="controls">
+  <div style="display:flex;align-items:center;gap:6px"><span class="ctrl-lbl">From</span><input type="date" class="dt" id="fromDate"></div>
+  <div style="display:flex;align-items:center;gap:6px"><span class="ctrl-lbl">To</span><input type="date" class="dt" id="toDate"></div>
+  <div class="sep"></div>
+  <div style="display:flex;gap:4px">
+    <button class="pb" onclick="setPreset('today',this)">Today</button>
+    <button class="pb" onclick="setPreset('week',this)">This Week</button>
+    <button class="pb active" onclick="setPreset('month',this)">This Month</button>
+    <button class="pb" onclick="setPreset('last30',this)">Last 30 Days</button>
+    <button class="pb" onclick="setPreset('last3m',this)">Last 3 Months</button>
+  </div>
+  <div class="sep"></div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <span class="ctrl-lbl">View</span>
+    <div class="vt">
+      <button class="vb" onclick="setView('hourly',this)">Hourly</button>
+      <button class="vb active" onclick="setView('daily',this)">Daily</button>
+      <button class="vb" onclick="setView('weekly',this)">Weekly</button>
+      <button class="vb" onclick="setView('monthly',this)">Monthly</button>
+    </div>
+  </div>
+  <button class="btn-load" onclick="loadData()">↻ Load Data</button>
+</div>
+<div class="content">
+  <div class="kpi-grid">
+    <div class="kc g"><div class="kdot g"></div><div class="klbl">Total Consumption</div><div class="kval" id="k-kwh">—<span class="u">kWh</span></div><div class="ksub">Selected period</div></div>
+    <div class="kc g"><div class="kdot g"></div><div class="klbl">Total Cost</div><div class="kval" id="k-cost">—</div><div class="ksub">LKR for period</div></div>
+    <div class="kc b"><div class="kdot b"></div><div class="klbl">Max Demand</div><div class="kval" id="k-kva">—<span class="u">kVA</span></div><div class="ksub">Peak recorded</div></div>
+    <div class="kc g"><div class="kdot g"></div><div class="klbl">Average Tariff</div><div class="kval" id="k-tariff">—<span class="u">LKR/kWh</span></div><div class="ksub">Blended rate</div></div>
+    <div class="kc p"><div class="kdot p"></div><div class="klbl">Peak Cost</div><div class="kval" id="k-peak">—</div><div class="ksub">17:00–22:00 · LKR 39/kWh</div></div>
+    <div class="kc d"><div class="kdot d"></div><div class="klbl">Day Cost</div><div class="kval" id="k-day">—</div><div class="ksub">09:00–17:00 · LKR 19/kWh</div></div>
+    <div class="kc o"><div class="kdot o"></div><div class="klbl">Off-Peak Cost</div><div class="kval" id="k-op">—</div><div class="ksub">22:00–09:00 · LKR 16.50/kWh</div></div>
+    <div class="kc o"><div class="kdot o"></div><div class="klbl">Off-Peak Savings</div><div class="kval" id="k-save">—</div><div class="ksub">vs all-peak rate</div></div>
+  </div>
+  <div class="cr cr2">
+    <div class="cc">
+      <div class="ch"><div><div class="ct">Cost Over Time (LKR)</div><div class="cs">Breakdown by Peak / Day / Off-Peak</div></div></div>
+      <div class="cw" style="height:220px"><canvas id="costChart"></canvas></div>
+      <div class="leg">
+        <div class="li"><div class="ld" style="background:var(--peak)"></div>Peak</div>
+        <div class="li"><div class="ld" style="background:var(--day)"></div>Day</div>
+        <div class="li"><div class="ld" style="background:var(--op)"></div>Off-Peak</div>
+      </div>
+    </div>
+    <div class="cc">
+      <div class="ch"><div><div class="ct">Usage Distribution</div><div class="cs">kWh by time-of-use</div></div></div>
+      <div class="cw" style="height:200px"><canvas id="usagePie"></canvas></div>
+    </div>
+  </div>
+  <div class="cr cr2">
+    <div class="cc">
+      <div class="ch"><div><div class="ct">Electricity Usage Over Time (kWh)</div><div class="cs">Breakdown by Peak / Day / Off-Peak</div></div></div>
+      <div class="cw" style="height:220px"><canvas id="usageChart"></canvas></div>
+      <div class="leg">
+        <div class="li"><div class="ld" style="background:var(--peak)"></div>Peak</div>
+        <div class="li"><div class="ld" style="background:var(--day)"></div>Day</div>
+        <div class="li"><div class="ld" style="background:var(--op)"></div>Off-Peak</div>
+      </div>
+    </div>
+    <div class="cc">
+      <div class="ch"><div><div class="ct">Cost Distribution</div><div class="cs">LKR by time-of-use</div></div></div>
+      <div class="cw" style="height:200px"><canvas id="costPie"></canvas></div>
+    </div>
+  </div>
+  <div class="cr" style="grid-template-columns:1fr;margin-bottom:12px">
+    <div class="cc">
+      <div class="ch"><div><div class="ct">Maximum Demand (kVA)</div><div class="cs">Peak demand per period — Contract limit: <span id="climit">63</span> kVA</div></div></div>
+      <div class="cw" style="height:160px"><canvas id="kvaChart"></canvas></div>
+    </div>
+  </div>
+</div>
+<script>
+const API_URL='https://venora-cloud-server-production.up.railway.app';
+const API_KEY='venora-super-secret-key-2025-change-this';
+let user=null,charts={},view='daily';
+function checkAuth(){const s=sessionStorage.getItem('user');if(!s){window.location.href='login.html';return false;}user=JSON.parse(s);document.getElementById('userBadge').textContent=user.name;document.getElementById('siteBadge').textContent='Site '+user.site_id;return true;}
+function logout(){sessionStorage.removeItem('user');window.location.href='login.html';}
+function fd(d){return d.toISOString().split('T')[0];}
+function setPreset(p,el){
+  document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+  const n=new Date();let from,to=fd(n);
+  if(p==='today'){from=to;}
+  else if(p==='week'){const d=new Date(n);d.setDate(d.getDate()-d.getDay());from=fd(d);}
+  else if(p==='month'){from=fd(new Date(n.getFullYear(),n.getMonth(),1));}
+  else if(p==='last30'){const d=new Date(n);d.setDate(d.getDate()-30);from=fd(d);}
+  else if(p==='last3m'){const d=new Date(n);d.setMonth(d.getMonth()-3);from=fd(d);}
+  document.getElementById('fromDate').value=from;document.getElementById('toDate').value=to;
+}
+function setView(v,el){view=v;document.querySelectorAll('.vb').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function fN(n,d=1){if(n===null||n===undefined||isNaN(n))return'—';n=parseFloat(n);if(n>=1000000)return(n/1000000).toFixed(d)+'M';if(n>=1000)return(n/1000).toFixed(d)+'K';return n.toFixed(d);}
+function fL(n){return'LKR '+fN(n,0);}
+const TD={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#10141F',borderColor:'#1E2840',borderWidth:1,titleColor:'#C9A347',bodyColor:'#F0EDE6',padding:10}},scales:{x:{grid:{color:'rgba(30,40,64,.5)'},ticks:{color:'#6B7191',font:{size:10},maxTicksLimit:10}},y:{grid:{color:'rgba(30,40,64,.5)'},ticks:{color:'#6B7191',font:{size:10}}}}};
+function mkBar(id,labels,datasets,yf){
+  if(charts[id])charts[id].destroy();
+  const ctx=document.getElementById(id).getContext('2d');
+  charts[id]=new Chart(ctx,{type:'bar',data:{labels,datasets},options:{...TD,plugins:{...TD.plugins,tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+(yf?yf(c.raw):c.raw)}}},scales:{x:{...TD.scales.x,stacked:true},y:{...TD.scales.y,stacked:true,ticks:{...TD.scales.y.ticks,callback:v=>yf?yf(v):v}}}}});
+}
+function mkPie(id,labels,data,colors){
+  if(charts[id])charts[id].destroy();
+  const ctx=document.getElementById(id).getContext('2d');
+  charts[id]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#10141F',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#9499B5',font:{size:11},padding:10,boxWidth:10}},tooltip:{backgroundColor:'#10141F',borderColor:'#1E2840',borderWidth:1,titleColor:'#C9A347',bodyColor:'#F0EDE6',callbacks:{label:c=>' '+fN(c.raw,1)+' ('+((c.raw/c.dataset.data.reduce((a,b)=>a+b,0))*100).toFixed(1)+'%)'}}}}});
+}
+function mkLine(id,labels,datasets){
+  if(charts[id])charts[id].destroy();
+  const ctx=document.getElementById(id).getContext('2d');
+  charts[id]=new Chart(ctx,{type:'line',data:{labels,datasets},options:{...TD,plugins:{...TD.plugins,tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+fN(c.raw,2)+' kVA'}}},scales:{...TD.scales,y:{...TD.scales.y,ticks:{...TD.scales.y.ticks,callback:v=>fN(v,1)}}}}});
+}
+function fP(p,v){
+  const d=new Date(p);
+  if(v==='hourly')return d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  if(v==='daily')return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  if(v==='weekly')return 'W/E '+d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  if(v==='monthly')return d.toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+  return p;
+}
+async function loadData(){
+  if(!checkAuth())return;
+  const from=document.getElementById('fromDate').value;
+  const to=document.getElementById('toDate').value;
+  if(!from||!to){alert('Please select a date range');return;}
+  document.getElementById('ov').style.display='flex';
+  try{
+    const r=await fetch(`${API_URL}/api/analytics/dashboard?site_id=${user.site_id}&from=${from}&to=${to}&group_by=${view}`,{headers:{'x-api-key':API_KEY}});
+    const data=await r.json();
+    if(data.error)throw new Error(data.error);
+    const k=data.kpis;
+    document.getElementById('k-kwh').innerHTML=fN(k.total_kwh,2)+'<span class="u">kWh</span>';
+    document.getElementById('k-cost').textContent=fL(k.total_cost);
+    document.getElementById('k-kva').innerHTML=fN(k.max_kva,2)+'<span class="u">kVA</span>';
+    document.getElementById('k-tariff').innerHTML=fN(k.avg_tariff,2)+'<span class="u">LKR/kWh</span>';
+    document.getElementById('k-peak').textContent=fL(k.peak_cost);
+    document.getElementById('k-day').textContent=fL(k.day_cost);
+    document.getElementById('k-op').textContent=fL(k.offpeak_cost);
+    document.getElementById('k-save').textContent=fL(k.offpeak_savings);
+    if(data.tariff&&data.tariff.contract_demand_kva)document.getElementById('climit').textContent=data.tariff.contract_demand_kva;
+    const ts=data.time_series||[];
+    const labels=ts.map(r=>fP(r.period,view));
+    mkBar('costChart',labels,[
+      {label:'Peak',data:ts.map(r=>r.peak_cost),backgroundColor:'rgba(224,90,90,.8)'},
+      {label:'Day',data:ts.map(r=>r.day_cost),backgroundColor:'rgba(201,163,71,.8)'},
+      {label:'Off-Peak',data:ts.map(r=>r.offpeak_cost),backgroundColor:'rgba(76,175,125,.8)'},
+    ],v=>'LKR '+fN(v,0));
+    mkBar('usageChart',labels,[
+      {label:'Peak',data:ts.map(r=>r.peak_kwh),backgroundColor:'rgba(224,90,90,.8)'},
+      {label:'Day',data:ts.map(r=>r.day_kwh),backgroundColor:'rgba(201,163,71,.8)'},
+      {label:'Off-Peak',data:ts.map(r=>r.offpeak_kwh),backgroundColor:'rgba(76,175,125,.8)'},
+    ],v=>fN(v,1)+' kWh');
+    mkLine('kvaChart',labels,[{label:'Max kVA',data:ts.map(r=>r.max_kva),borderColor:'#5A9EE0',backgroundColor:'rgba(90,158,224,.1)',borderWidth:2,pointRadius:2,fill:true,tension:.3}]);
+    if(data.tou_breakdown){
+      const tou=data.tou_breakdown;
+      const tlbl=tou.map(t=>t.period+' ('+t.hours+')');
+      const col=['#E05A5A','#C9A347','#4CAF7D'];
+      mkPie('usagePie',tlbl,tou.map(t=>t.kwh),col);
+      mkPie('costPie',tlbl,tou.map(t=>t.cost),col);
+    }
+  }catch(err){console.error(err);alert('Error: '+err.message);}
+  finally{document.getElementById('ov').style.display='none';}
+}
+if(checkAuth()){
+  const n=new Date();
+  document.getElementById('fromDate').value=fd(new Date(n.getFullYear(),n.getMonth(),1));
+  document.getElementById('toDate').value=fd(n);
+  loadData();
+}
+</script>
+</body>
+</html>

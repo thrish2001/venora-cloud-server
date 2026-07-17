@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dirisdigiware — Venora Lanka Power Panels</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#C9A347;--gold-l:#E8C976;--gold-d:#9A7A2E;
+  --bg:#08090F;--card:#10141F;--inp:#181D2C;--border:#252D42;
+  --text:#F0EDE6;--muted:#8B8FA8;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(201,163,71,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,163,71,.04) 1px,transparent 1px);background-size:60px 60px;z-index:0}
+body::after{content:'';position:fixed;width:600px;height:600px;background:radial-gradient(circle,rgba(201,163,71,.08) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1;width:100%;max-width:460px;padding:24px}
+.logo-sec{text-align:center;margin-bottom:40px}
+.brand-name{font-family:'Playfair Display',serif;font-size:28px;font-weight:600;color:var(--gold);letter-spacing:2px;text-transform:uppercase}
+.brand-sub{font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:4px}
+.tagline{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;box-shadow:0 24px 64px rgba(0,0,0,.6)}
+.card h2{font-size:18px;font-weight:500;margin-bottom:6px}
+.card p{font-size:13px;color:var(--muted);margin-bottom:28px}
+.fg{margin-bottom:20px}
+.fg label{display:block;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.fg input{width:100%;background:var(--inp);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s}
+.fg input:focus{border-color:var(--gold-d);box-shadow:0 0 0 3px rgba(201,163,71,.1)}
+.fg input::placeholder{color:#3A4060}
+.btn{width:100%;background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:10px;padding:15px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:#0A0A0A;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:opacity .2s,transform .1s;margin-top:8px}
+.btn:hover{opacity:.9;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.err{background:rgba(220,50,50,.1);border:1px solid rgba(220,50,50,.3);border-radius:8px;padding:12px 16px;font-size:13px;color:#FF6B6B;margin-bottom:20px;display:none}
+.div{height:1px;background:var(--border);margin:28px 0}
+.footer{text-align:center;font-size:11px;color:var(--muted);line-height:1.6}
+.footer span{color:var(--gold-d)}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:480px){.card{padding:28px 20px}.wrap{padding:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo-sec">
+    <div class="brand-name">Venora</div>
+    <div class="brand-sub">Lanka Power Panels (Pvt) Ltd</div>
+    <div class="tagline">Dirisdigiware — Energy Intelligence Platform</div>
+  </div>
+  <div class="card">
+    <h2>Welcome back</h2>
+    <p>Sign in to view your energy analytics dashboard</p>
+    <div class="err" id="errMsg">Invalid username or password. Please try again.</div>
+    <div class="fg">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Enter your username" autocomplete="username">
+    </div>
+    <div class="fg">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+    </div>
+    <button class="btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
+    <div class="div"></div>
+    <div class="footer">Powered by <span>Venora Lanka Power Panels</span><br>BOI Approved Company · Biyagama, Malwana</div>
+  </div>
+</div>
+<script>
+// ── ADD / REMOVE USERS HERE ───────────────────────────────────────────────────
+const USERS = [
+  { username:'admin',  password:'venora2025', site_id:1, name:'Administrator',     role:'admin'  },
+  { username:'site1',  password:'client2025', site_id:1, name:'Site 1 - Factory A', role:'client' },
+];
+// ─────────────────────────────────────────────────────────────────────────────
+document.getElementById('password').addEventListener('keypress',e=>{if(e.key==='Enter')handleLogin()});
+document.getElementById('username').addEventListener('keypress',e=>{if(e.key==='Enter')handleLogin()});
+function handleLogin(){
+  const u=document.getElementById('username').value.trim();
+  const p=document.getElementById('password').value;
+  const btn=document.getElementById('loginBtn');
+  const err=document.getElementById('errMsg');
+  if(!u||!p){err.textContent='Please enter your username and password.';err.style.display='block';return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Signing in...';err.style.display='none';
+  setTimeout(()=>{
+    const user=USERS.find(x=>x.username===u&&x.password===p);
+    if(user){sessionStorage.setItem('user',JSON.stringify(user));window.location.href='dashboard.html';}
+    else{btn.disabled=false;btn.innerHTML='Sign In';err.textContent='Invalid username or password. Please try again.';err.style.display='block';}
+  },800);
+}
+</script>
+</body>
+</html>
