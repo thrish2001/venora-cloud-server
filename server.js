@@ -3,9 +3,10 @@ const cors = require('cors');
 require('dotenv').config();
 const pool = require('./db');
 const { calculateCosts } = require('./costCalculator');
+const app = express();
+app.use(cors());
 app.use(express.json());
-
-
+app.use(express.static('public'));
 // Load routes
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/analytics', require('./routes/analytics'));
