@@ -27,6 +27,40 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
     const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     const filename = req.file.originalname || '';
     const client = await pool.connect();
+    // Check unit limit
+try {
+  const limitCheck = await client.query(
+    `SELECT COUNT(DISTINCT breaker_name) as unit_count,
+            s.max_units
+     FROM energy_readings e
+     JOIN sites s ON s.id = e.site_id
+     WHERE e.site_id = $1
+     GROUP BY s.max_units`,
+    [parseInt(site_id)]
+  );
+
+  if (limitCheck.rows.length > 0) {
+    const { unit_count, max_units } = limitCheck.rows[0];
+    if (max_units && parseInt(unit_count) >= parseInt(max_units)) {
+      const existingBreaker = await client.query(
+        `SELECT 1 FROM energy_readings
+         WHERE site_id=$1 AND breaker_name=$2 LIMIT 1`,
+        [parseInt(site_id), breakerName]
+      );
+      if (existingBreaker.rows.length === 0) {
+        client.release();
+        fs.unlinkSync(req.file.path);
+        return res.status(403).json({
+          error: `Unit limit reached. This site is limited to ${max_units} units. Contact Venora Lanka Power Panels to upgrade.`,
+          current_units: unit_count,
+          max_units: max_units
+        });
+      }
+    }
+  }
+} catch (limitErr) {
+  console.error('Limit check error:', limitErr.message);
+}
     let result = {};
 
     try {
