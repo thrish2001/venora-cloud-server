@@ -204,3 +204,36 @@ router.get('/monthly-cost', async (req, res) => {
 });
 
 module.exports = router;
+// Unit usage for a site
+router.get('/unit-usage', async (req, res) => {
+  const { site_id } = req.query;
+  try {
+    const result = await pool.query(`
+      SELECT
+        COUNT(DISTINCT e.breaker_name) AS units_used,
+        s.max_units,
+        ARRAY_AGG(DISTINCT e.breaker_name ORDER BY e.breaker_name) AS breaker_names
+      FROM energy_readings e
+      JOIN sites s ON s.id = e.site_id
+      WHERE e.site_id = $1
+      GROUP BY s.max_units
+    `, [site_id]);
+
+    if (result.rows.length === 0) {
+      return res.json({ units_used: 0, max_units: 10, breaker_names: [], percentage: 0 });
+    }
+
+    const row = result.rows[0];
+    const used = parseInt(row.units_used);
+    const max  = parseInt(row.max_units) || 10;
+    res.json({
+      units_used:    used,
+      max_units:     max,
+      units_free:    max - used,
+      percentage:    Math.round((used / max) * 100),
+      breaker_names: row.breaker_names || []
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
