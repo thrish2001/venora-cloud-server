@@ -23,81 +23,73 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
   }
 
   try {
-    const content = fs.readFileSync(req.file.path, 'utf8');
-    const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const content  = fs.readFileSync(req.file.path, 'utf8');
+    const lines    = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     const filename = req.file.originalname || '';
-    const client = await pool.connect();
-    // Check unit limit
-try {
-  const limitCheck = await client.query(
-    `SELECT COUNT(DISTINCT breaker_name) as unit_count,
-            s.max_units
-     FROM energy_readings e
-     JOIN sites s ON s.id = e.site_id
-     WHERE e.site_id = $1
-     GROUP BY s.max_units`,
-    [parseInt(site_id)]
-  );
-
-  if (limitCheck.rows.length > 0) {
-    const { unit_count, max_units } = limitCheck.rows[0];
-    if (max_units && parseInt(unit_count) >= parseInt(max_units)) {
-      const existingBreaker = await client.query(
-        `SELECT 1 FROM energy_readings
-         WHERE site_id=$1 AND breaker_name=$2 LIMIT 1`,
-        [parseInt(site_id), breakerName]
-      );
-      if (existingBreaker.rows.length === 0) {
-        client.release();
-        fs.unlinkSync(req.file.path);
-        return res.status(403).json({
-          error: `Unit limit reached. This site is limited to ${max_units} units. Contact Venora Lanka Power Panels to upgrade.`,
-          current_units: unit_count,
-          max_units: max_units
-        });
-      }
-    }
-  }
-} catch (limitErr) {
-  console.error('Limit check error:', limitErr.message);
-}
+    const client   = await pool.connect();
     let result = {};
 
     try {
-      // ── TRENDS FILE (15-minute interval data) ──────────────────
-      if (filename.includes('Trends')) {
-        // Row 1 is header: Local Time, Time (UTC), breaker:kvar, breaker:kVA, breaker:kW
-        const headers = lines[0].split('\t');
+      // ── TRENDS FILE ────────────────────────────────────────────
+      // Format: header row, then data rows newest-first (15-min intervals)
+      // We only want the LATEST (first data row) kW and kVA values
+      if (filename.toLowerCase().includes('trends')) {
 
-        // Extract breaker name from header column 2
-        const breakerRaw = headers[2] || '';
-        const breakerName = breakerRaw.split(':')[0].trim() || '125_Breaker';
+        // Row 0 = header: Local Time, UTC, breaker:kvar, breaker:kVA, breaker:kW
+        const headers    = lines[0].split('\t');
+        const breakerRaw = (headers[2] || '').split(':')[0].trim() || '125_Breaker';
+        const breakerName = breakerRaw;
 
-        let inserted = 0;
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split('\t');
-          if (cols.length < 5) continue;
+        // Row 1 = most recent reading (file is newest-first)
+        const latestRow = lines[1] ? lines[1].split('\t') : null;
 
-          const recorded_at = new Date(cols[0].trim());
-          if (isNaN(recorded_at.getTime())) continue;
-
-          const kva = parseFloat(cols[3]) || null;  // column 4 = kVA
-          const kw  = parseFloat(cols[4]) || null;  // column 5 = kW
-
-          await client.query(
-            `INSERT INTO energy_readings
-             (site_id, breaker_name, recorded_at, kwh, kva, voltage)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             ON CONFLICT DO NOTHING`,
-            [parseInt(site_id), breakerName, recorded_at, kw, kva, null]
-          );
-          inserted++;
+        if (!latestRow || latestRow.length < 5) {
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({ error: 'No data rows found in Trends file' });
         }
 
-        result = { success: true, type: 'Trends', rows_inserted: inserted, breaker: breakerName };
+        const recorded_at = new Date(latestRow[0].trim());
+        const kva  = parseFloat(latestRow[3]) || null;  // column 4 = kVA
+        const kw   = parseFloat(latestRow[4]) || null;  // column 5 = kW
 
-      // ── INDEX FILE (weekly summary with Total row) ──────────────
+        if (isNaN(recorded_at.getTime())) {
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({ error: 'Invalid timestamp in Trends file' });
+        }
+
+        // Delete existing record for same breaker + same date
+        // so we always keep only the latest value
+        await client.query(
+          `DELETE FROM energy_readings
+           WHERE site_id = $1
+             AND breaker_name = $2
+             AND DATE(recorded_at) = DATE($3)`,
+          [parseInt(site_id), breakerName, recorded_at]
+        );
+
+        // Insert the latest reading
+        await client.query(
+          `INSERT INTO energy_readings
+           (site_id, breaker_name, recorded_at, kwh, kva, voltage)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [parseInt(site_id), breakerName, recorded_at, kw, kva, null]
+        );
+
+        result = {
+          success: true,
+          type: 'Trends',
+          breaker: breakerName,
+          recorded_at: recorded_at,
+          kw: kw,
+          kva: kva,
+          rows_inserted: 1
+        };
+
+      // ── INDEX FILE ─────────────────────────────────────────────
+      // Format: Row 0 = measurement type + breaker name
+      //         Row 1 = Total value
       } else {
+
         const row1 = lines[0].replace(/"/g, '').split(',');
         const measurementType = (row1[0] || '').trim();
         const breakerName     = (row1[1] || 'Unknown').trim();
@@ -109,9 +101,10 @@ try {
 
         if (label !== 'total' || isNaN(totalVal)) {
           fs.unlinkSync(req.file.path);
-          return res.status(400).json({ error: 'Could not find Total row in CSV' });
+          return res.status(400).json({ error: 'Could not find Total row in Index file' });
         }
 
+        // Extract date from filename
         let recorded_at = new Date();
         const dateMatch = filename.match(/(\d{4}-\d{2}-\d{2})/);
         if (dateMatch) recorded_at = new Date(dateMatch[1]);
@@ -120,6 +113,14 @@ try {
         const isKva = unit.includes('kva') || measurementType.toLowerCase().includes('demand');
 
         if (isKwh) {
+          // Delete existing kWh record for same date and breaker
+          await client.query(
+            `DELETE FROM energy_readings
+             WHERE site_id=$1 AND breaker_name=$2
+             AND DATE(recorded_at)=DATE($3)
+             AND kva IS NULL`,
+            [parseInt(site_id), breakerName, recorded_at]
+          );
           await client.query(
             `INSERT INTO energy_readings
              (site_id, breaker_name, recorded_at, kwh, kva, voltage)
@@ -130,11 +131,10 @@ try {
           const existing = await client.query(
             `SELECT id FROM energy_readings
              WHERE site_id=$1 AND breaker_name=$2
-             AND DATE(recorded_at) = DATE($3)
+             AND DATE(recorded_at)=DATE($3)
              ORDER BY uploaded_at DESC LIMIT 1`,
             [parseInt(site_id), breakerName, recorded_at]
           );
-
           if (existing.rows.length > 0) {
             await client.query(
               `UPDATE energy_readings SET kva=$1 WHERE id=$2`,
@@ -151,8 +151,11 @@ try {
         }
 
         result = {
-          success: true, type: isKwh ? 'kWh' : 'kVA',
-          total_value: totalVal, unit, breaker: breakerName
+          success: true,
+          type: isKwh ? 'kWh' : 'kVA',
+          breaker: breakerName,
+          total_value: totalVal,
+          unit: unit
         };
       }
 
