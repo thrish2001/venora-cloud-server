@@ -30,71 +30,66 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
     let result = {};
 
     try {
+      // Add unique constraint if not exists (runs silently)
+      await client.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_readings_unique
+        ON energy_readings (site_id, breaker_name, recorded_at)
+      `).catch(() => {});
+
       // ── TRENDS FILE ────────────────────────────────────────────
-      // Format: header row, then data rows newest-first (15-min intervals)
-      // We only want the LATEST (first data row) kW and kVA values
       if (filename.toLowerCase().includes('trends')) {
 
-        // Row 0 = header: Local Time, UTC, breaker:kvar, breaker:kVA, breaker:kW
-        const headers    = lines[0].split('\t');
-        const breakerRaw = (headers[2] || '').split(':')[0].trim() || '125_Breaker';
-        const breakerName = breakerRaw;
+        const headers     = lines[0].split('\t');
+        const breakerRaw  = (headers[2] || '').split(':')[0].trim();
+        const breakerName = breakerRaw || '125_Breaker';
 
-        // Row 1 = most recent reading (file is newest-first)
-        const latestRow = lines[1] ? lines[1].split('\t') : null;
+        let inserted = 0;
+        let skipped  = 0;
 
-        if (!latestRow || latestRow.length < 5) {
-          fs.unlinkSync(req.file.path);
-          return res.status(400).json({ error: 'No data rows found in Trends file' });
+        // Store ALL rows — skip duplicates silently
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split('\t');
+          if (cols.length < 5) continue;
+
+          const recorded_at = new Date(cols[0].trim());
+          if (isNaN(recorded_at.getTime())) continue;
+
+          const kva = parseFloat(cols[3]) || null;  // kVA
+          const kw  = parseFloat(cols[4]) || null;  // kW
+
+          try {
+            await client.query(
+              `INSERT INTO energy_readings
+               (site_id, breaker_name, recorded_at, kwh, kva, voltage)
+               VALUES ($1, $2, $3, $4, $5, $6)
+               ON CONFLICT (site_id, breaker_name, recorded_at)
+               DO UPDATE SET
+                 kwh = EXCLUDED.kwh,
+                 kva = EXCLUDED.kva`,
+              [parseInt(site_id), breakerName, recorded_at, kw, kva, null]
+            );
+            inserted++;
+          } catch (e) {
+            skipped++;
+          }
         }
-
-        const recorded_at = new Date(latestRow[0].trim());
-        const kva  = parseFloat(latestRow[3]) || null;  // column 4 = kVA
-        const kw   = parseFloat(latestRow[4]) || null;  // column 5 = kW
-
-        if (isNaN(recorded_at.getTime())) {
-          fs.unlinkSync(req.file.path);
-          return res.status(400).json({ error: 'Invalid timestamp in Trends file' });
-        }
-
-        // Delete existing record for same breaker + same date
-        // so we always keep only the latest value
-        await client.query(
-          `DELETE FROM energy_readings
-           WHERE site_id = $1
-             AND breaker_name = $2
-             AND DATE(recorded_at) = DATE($3)`,
-          [parseInt(site_id), breakerName, recorded_at]
-        );
-
-        // Insert the latest reading
-        await client.query(
-          `INSERT INTO energy_readings
-           (site_id, breaker_name, recorded_at, kwh, kva, voltage)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [parseInt(site_id), breakerName, recorded_at, kw, kva, null]
-        );
 
         result = {
           success: true,
           type: 'Trends',
           breaker: breakerName,
-          recorded_at: recorded_at,
-          kw: kw,
-          kva: kva,
-          rows_inserted: 1
+          rows_inserted: inserted,
+          rows_skipped: skipped
         };
 
       // ── INDEX FILE ─────────────────────────────────────────────
-      // Format: Row 0 = measurement type + breaker name
-      //         Row 1 = Total value
       } else {
 
         const row1 = lines[0].replace(/"/g, '').split(',');
         const measurementType = (row1[0] || '').trim();
         const breakerName     = (row1[1] || 'Unknown').trim();
 
-        const row2 = lines[1].replace(/"/g, '').split(',');
+        const row2     = lines[1].replace(/"/g, '').split(',');
         const label    = (row2[0] || '').trim().toLowerCase();
         const totalVal = parseFloat(row2[1] || 0);
         const unit     = (row2[2] || '').trim().toLowerCase();
@@ -104,7 +99,6 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
           return res.status(400).json({ error: 'Could not find Total row in Index file' });
         }
 
-        // Extract date from filename
         let recorded_at = new Date();
         const dateMatch = filename.match(/(\d{4}-\d{2}-\d{2})/);
         if (dateMatch) recorded_at = new Date(dateMatch[1]);
@@ -113,25 +107,19 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
         const isKva = unit.includes('kva') || measurementType.toLowerCase().includes('demand');
 
         if (isKwh) {
-          // Delete existing kWh record for same date and breaker
-          await client.query(
-            `DELETE FROM energy_readings
-             WHERE site_id=$1 AND breaker_name=$2
-             AND DATE(recorded_at)=DATE($3)
-             AND kva IS NULL`,
-            [parseInt(site_id), breakerName, recorded_at]
-          );
           await client.query(
             `INSERT INTO energy_readings
              (site_id, breaker_name, recorded_at, kwh, kva, voltage)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
+             VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT (site_id, breaker_name, recorded_at)
+             DO UPDATE SET kwh = EXCLUDED.kwh`,
             [parseInt(site_id), breakerName, recorded_at, totalVal, null, null]
           );
         } else if (isKva) {
           const existing = await client.query(
             `SELECT id FROM energy_readings
              WHERE site_id=$1 AND breaker_name=$2
-             AND DATE(recorded_at)=DATE($3)
+             AND DATE(recorded_at) = DATE($3)
              ORDER BY uploaded_at DESC LIMIT 1`,
             [parseInt(site_id), breakerName, recorded_at]
           );
@@ -144,7 +132,9 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
             await client.query(
               `INSERT INTO energy_readings
                (site_id, breaker_name, recorded_at, kwh, kva, voltage)
-               VALUES ($1, $2, $3, $4, $5, $6)`,
+               VALUES ($1, $2, $3, $4, $5, $6)
+               ON CONFLICT (site_id, breaker_name, recorded_at)
+               DO UPDATE SET kva = EXCLUDED.kva`,
               [parseInt(site_id), breakerName, recorded_at, null, totalVal, null]
             );
           }
