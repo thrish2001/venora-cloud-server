@@ -279,13 +279,30 @@ function setPreset(p, el) {
   document.getElementById('fromDate').value = from;
   document.getElementById('toDate').value = to;
 }
-
+function setPreset(p, el) {
+  document.querySelectorAll('.pb').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const n = new Date(); let from, to = fd(n);
+  if (p === 'today')  { from = to; }
+  else if (p === 'week')  { const d = new Date(n); d.setDate(d.getDate() - d.getDay()); from = fd(d); }
+  else if (p === 'month') { from = fd(new Date(n.getFullYear(), n.getMonth(), 1)); }
+  else if (p === 'last30'){ const d = new Date(n); d.setDate(d.getDate() - 30); from = fd(d); }
+  else if (p === 'last3m'){ const d = new Date(n); d.setMonth(d.getMonth() - 3); from = fd(d); }
+  document.getElementById('fromDate').value = from;
+  document.getElementById('toDate').value = to;
+  loadData();
+}
 function setView(v, el) {
   view = v;
   document.querySelectorAll('.vb').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
 }
-
+function setView(v, el) {
+  view = v;
+  document.querySelectorAll('.vb').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  loadData();
+}
 function fN(n, d=1) {
   if (n === null || n === undefined || isNaN(n)) return '—';
   n = parseFloat(n);
