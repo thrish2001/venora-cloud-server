@@ -16,9 +16,52 @@ function checkApiKey(req, res, next) {
   next();
 }
 
-// Detect separator (tab or comma)
-function getSeparator(line) {
+// Detect separator
+function getSep(line) {
   return line.includes('\t') ? '\t' : ',';
+}
+
+// Smart parser — scans for known row labels instead of fixed line numbers
+function parseHeader(lines) {
+  const sep         = getSep(lines[0]);
+  let breakerName   = '125_Breaker';
+  let dataStartIdx  = -1;
+  let totalRowIdx   = -1;
+  let unitRowIdx    = -1;
+  let units         = [];
+
+  for (let i = 0; i < Math.min(lines.length, 20); i++) {
+    const cols     = lines[i].split(sep).map(c => c.trim().replace(/"/g, ''));
+    const firstCol = cols[0].toLowerCase().trim();
+
+    // Find breaker name from "Load Name" row
+    if (firstCol === 'load name') {
+      for (let c = 1; c < cols.length; c++) {
+        if (cols[c] && cols[c].length > 0 && cols[c] !== 'Load Name') {
+          breakerName = cols[c];
+          break;
+        }
+      }
+    }
+
+    // Find unit row (W, var, VA, kWh etc)
+    if (firstCol === 'unit') {
+      units = cols.slice(1).filter(u => u.length > 0);
+      unitRowIdx = i;
+    }
+
+    // Find "Date" header row — data starts next line
+    if (firstCol === 'date') {
+      dataStartIdx = i + 1;
+    }
+
+    // Find "Total" row in Index files
+    if (firstCol === 'total') {
+      totalRowIdx = i;
+    }
+  }
+
+  return { sep, breakerName, dataStartIdx, totalRowIdx, unitRowIdx, units };
 }
 
 router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
@@ -29,10 +72,11 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
 
   try {
     const content  = fs.readFileSync(req.file.path, 'utf8');
-    const lines    = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const allLines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     const filename = req.file.originalname || '';
+    const fn       = filename.toLowerCase();
     const client   = await pool.connect();
-    let result = {};
+    let result     = {};
 
     try {
       // Ensure unique index exists
@@ -41,47 +85,35 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
         ON energy_readings (site_id, breaker_name, recorded_at)
       `).catch(() => {});
 
+      const h = parseHeader(allLines);
+
       // ── LOADCURVE FILE ──────────────────────────────────────────
-      // File: I_35@3_LoadCurve_2026-07-21_08-45-05.csv
-      // Structure:
-      //   Row 1:  Device name, IP, Modbus, Begin date, End date
-      //   Row 4:  Load Name, 125_Breaker, 125_Breaker, 125_Breaker
-      //   Row 7:  Measured value, P+(W), Q+(var), S(VA)
-      //   Row 8:  Unit, W, var, VA
-      //   Row 10: Date, Values, Values, Values, Flags
-      //   Row 11+: timestamp, W_value, var_value, VA_value, flags
-      if (filename.toLowerCase().includes('loadcurve')) {
+      // Has 15-min interval data: W, var, VA columns
+      // Convert: W/1000 = kW, VA/1000 = kVA
+      if (fn.includes('loadcurve')) {
 
-        const sep = getSeparator(lines[0]);
+        if (h.dataStartIdx < 0) {
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({ error: 'Could not find Date header in LoadCurve file' });
+        }
 
-        // Row 4 (index 3) = Load names
-        const nameRow    = lines[3] ? lines[3].split(sep) : [];
-        const breakerName = (nameRow[1] && nameRow[1].trim().length > 0)
-          ? nameRow[1].trim() : '125_Breaker';
-
-        // Data starts at row 11 (index 10)
         let inserted = 0;
         let updated  = 0;
 
-        for (let i = 10; i < lines.length; i++) {
-          const cols = lines[i].split(sep);
+        for (let i = h.dataStartIdx; i < allLines.length; i++) {
+          const cols = allLines[i].split(h.sep);
           if (cols.length < 4) continue;
 
-          // Column A = timestamp
           const recorded_at = new Date(cols[0].trim());
           if (isNaN(recorded_at.getTime())) continue;
 
-          // Skip flag/summary rows
-          if (cols[0].trim().length < 10) continue;
-
-          // Column B = W (Active Power) → convert to kW
+          // Col B = W (Active Power) → kW
+          // Col D = VA (Apparent Power) → kVA
           const w_val  = parseFloat(cols[1]) || 0;
-          // Column D = VA (Apparent Power) → convert to kVA
           const va_val = parseFloat(cols[3]) || 0;
 
-          // Store kW in kwh column (analytics multiplies by 0.25 for kWh)
-          const kw  = w_val  / 1000;  // W → kW
-          const kva = va_val / 1000;  // VA → kVA
+          const kw  = w_val  / 1000;
+          const kva = va_val / 1000;
 
           try {
             const r = await client.query(
@@ -90,111 +122,46 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
                VALUES ($1, $2, $3, $4, $5, $6)
                ON CONFLICT (site_id, breaker_name, recorded_at)
                DO UPDATE SET kwh = EXCLUDED.kwh, kva = EXCLUDED.kva
-               RETURNING (xmax = 0) AS inserted`,
-              [parseInt(site_id), breakerName, recorded_at, kw, kva, null]
+               RETURNING (xmax = 0) AS is_new`,
+              [parseInt(site_id), h.breakerName, recorded_at, kw, kva, null]
             );
-            if (r.rows[0] && r.rows[0].inserted) inserted++;
+            if (r.rows[0] && r.rows[0].is_new) inserted++;
             else updated++;
-          } catch (e) {
-            // skip row errors silently
-          }
+          } catch (e) { /* skip row */ }
         }
 
         result = {
           success: true,
           type: 'LoadCurve',
-          breaker: breakerName,
+          breaker: h.breakerName,
           rows_inserted: inserted,
           rows_updated: updated,
           message: `${inserted} new + ${updated} updated rows`
         };
 
-      // ── TRENDS FILE ─────────────────────────────────────────────
-      // File: Trends_2026-07-07_16-49-25.csv
-      // Structure:
-      //   Row 1: Local Time, UTC, breaker:kvar, breaker:kVA, breaker:kW
-      //   Row 2+: timestamp, UTC, kvar, kVA, kW
-      } else if (filename.toLowerCase().includes('trends')) {
-
-        const headers = lines[0].split('\t');
-
-        // Extract breaker name from header columns
-        let breakerName = 'Unknown';
-        for (let h = 2; h < headers.length; h++) {
-          const parts = (headers[h] || '').split(':');
-          if (parts[0] && parts[0].trim().length > 0) {
-            breakerName = parts[0].trim();
-            break;
-          }
-        }
-
-        let inserted = 0;
-        let updated  = 0;
-
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split('\t');
-          if (cols.length < 5) continue;
-
-          const recorded_at = new Date(cols[0].trim());
-          if (isNaN(recorded_at.getTime())) continue;
-
-          const kva = parseFloat(cols[3]) || null;  // column 4 = kVA
-          const kw  = parseFloat(cols[4]) || null;  // column 5 = kW
-
-          try {
-            const r = await client.query(
-              `INSERT INTO energy_readings
-               (site_id, breaker_name, recorded_at, kwh, kva, voltage)
-               VALUES ($1, $2, $3, $4, $5, $6)
-               ON CONFLICT (site_id, breaker_name, recorded_at)
-               DO UPDATE SET kwh = EXCLUDED.kwh, kva = EXCLUDED.kva
-               RETURNING (xmax = 0) AS inserted`,
-              [parseInt(site_id), breakerName, recorded_at, kw, kva, null]
-            );
-            if (r.rows[0] && r.rows[0].inserted) inserted++;
-            else updated++;
-          } catch (e) {
-            // skip row errors silently
-          }
-        }
-
-        result = {
-          success: true,
-          type: 'Trends',
-          breaker: breakerName,
-          rows_inserted: inserted,
-          rows_updated: updated
-        };
-
       // ── INDEX FILE ──────────────────────────────────────────────
-      // File: I-35-3_Index_2026-07-01_15-15-07.csv
-      // Structure:
-      //   Row 1: Electricity - Ea+, 125_Breaker
-      //   Row 2: Total, 24915.823, kWh
-      //   Row 3: Average, ...
-      } else {
+      // Has Total and Average rows with kWh or kVA summary values
+      } else if (fn.includes('index')) {
 
-        const row1 = lines[0].replace(/"/g, '').split(',');
-        const measurementType = (row1[0] || '').trim();
-        const breakerName     = (row1[1] && row1[1].trim().length > 0)
-          ? row1[1].trim() : '125_Breaker';
-
-        const row2     = lines[1].replace(/"/g, '').split(',');
-        const label    = (row2[0] || '').trim().toLowerCase();
-        const totalVal = parseFloat(row2[1] || 0);
-        const unit     = (row2[2] || '').trim().toLowerCase();
-
-        if (label !== 'total' || isNaN(totalVal)) {
+        if (h.totalRowIdx < 0) {
           fs.unlinkSync(req.file.path);
           return res.status(400).json({ error: 'Could not find Total row in Index file' });
         }
 
+        const totalCols = allLines[h.totalRowIdx].split(h.sep)
+          .map(c => c.trim().replace(/"/g, ''));
+
+        // Get unit to determine if kWh or kVA
+        const unitStr = (h.units[0] || '').toLowerCase();
+        const totalVal = parseFloat(totalCols[1]) || 0;
+
+        // Extract date from filename
         let recorded_at = new Date();
         const dateMatch = filename.match(/(\d{4}-\d{2}-\d{2})/);
         if (dateMatch) recorded_at = new Date(dateMatch[1]);
 
-        const isKwh = unit.includes('kwh') || measurementType.toLowerCase().includes('ea');
-        const isKva = unit.includes('kva') || measurementType.toLowerCase().includes('demand');
+        const isKwh = unitStr.includes('wh') || unitStr.includes('kwh');
+        const isKva = unitStr.includes('va') && !unitStr.includes('wh');
 
         if (isKwh) {
           await client.query(
@@ -203,7 +170,7 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
              VALUES ($1, $2, $3, $4, $5, $6)
              ON CONFLICT (site_id, breaker_name, recorded_at)
              DO UPDATE SET kwh = EXCLUDED.kwh`,
-            [parseInt(site_id), breakerName, recorded_at, totalVal, null, null]
+            [parseInt(site_id), h.breakerName, recorded_at, totalVal, null, null]
           );
         } else if (isKva) {
           const existing = await client.query(
@@ -211,7 +178,7 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
              WHERE site_id=$1 AND breaker_name=$2
              AND DATE(recorded_at)=DATE($3)
              ORDER BY uploaded_at DESC LIMIT 1`,
-            [parseInt(site_id), breakerName, recorded_at]
+            [parseInt(site_id), h.breakerName, recorded_at]
           );
           if (existing.rows.length > 0) {
             await client.query(
@@ -225,17 +192,82 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
                VALUES ($1, $2, $3, $4, $5, $6)
                ON CONFLICT (site_id, breaker_name, recorded_at)
                DO UPDATE SET kva = EXCLUDED.kva`,
-              [parseInt(site_id), breakerName, recorded_at, null, totalVal, null]
+              [parseInt(site_id), h.breakerName, recorded_at, null, totalVal, null]
             );
           }
         }
 
         result = {
           success: true,
-          type: isKwh ? 'kWh Index' : 'kVA Index',
-          breaker: breakerName,
+          type: isKwh ? 'kWh Index' : isKva ? 'kVA Index' : 'Index',
+          breaker: h.breakerName,
           total_value: totalVal,
-          unit: unit
+          unit: unitStr
+        };
+
+      // ── AVG FILE ────────────────────────────────────────────────
+      // Average values — store as reference, skip cost calculation
+      } else if (fn.includes('avg')) {
+
+        // Just acknowledge — we do not store average files
+        result = {
+          success: true,
+          type: 'Avg',
+          message: 'Average file received — skipped (not stored)'
+        };
+
+      // ── TRENDS FILE ─────────────────────────────────────────────
+      // Legacy format: header row then tab-separated data
+      } else if (fn.includes('trends')) {
+
+        const headers = allLines[0].split('\t');
+        let breakerName = 'Unknown';
+        for (let hh = 2; hh < headers.length; hh++) {
+          const parts = (headers[hh] || '').split(':');
+          if (parts[0] && parts[0].trim().length > 0) {
+            breakerName = parts[0].trim();
+            break;
+          }
+        }
+
+        let inserted = 0, updated = 0;
+        for (let i = 1; i < allLines.length; i++) {
+          const cols = allLines[i].split('\t');
+          if (cols.length < 5) continue;
+          const recorded_at = new Date(cols[0].trim());
+          if (isNaN(recorded_at.getTime())) continue;
+          const kva = parseFloat(cols[3]) || null;
+          const kw  = parseFloat(cols[4]) || null;
+          try {
+            const r = await client.query(
+              `INSERT INTO energy_readings
+               (site_id, breaker_name, recorded_at, kwh, kva, voltage)
+               VALUES ($1,$2,$3,$4,$5,$6)
+               ON CONFLICT (site_id, breaker_name, recorded_at)
+               DO UPDATE SET kwh=EXCLUDED.kwh, kva=EXCLUDED.kva
+               RETURNING (xmax=0) AS is_new`,
+              [parseInt(site_id), breakerName, recorded_at, kw, kva, null]
+            );
+            if (r.rows[0] && r.rows[0].is_new) inserted++;
+            else updated++;
+          } catch (e) { /* skip */ }
+        }
+
+        result = {
+          success: true,
+          type: 'Trends',
+          breaker: breakerName,
+          rows_inserted: inserted,
+          rows_updated: updated
+        };
+
+      // ── UNKNOWN FILE ────────────────────────────────────────────
+      } else {
+        result = {
+          success: true,
+          type: 'Unknown',
+          filename: filename,
+          message: 'File type not recognised — skipped'
         };
       }
 
@@ -245,10 +277,13 @@ router.post('/csv', checkApiKey, upload.single('file'), async (req, res) => {
 
     fs.unlinkSync(req.file.path);
 
-    try {
-      await calculateCosts(parseInt(site_id));
-    } catch (calcErr) {
-      console.error('Cost calc error:', calcErr.message);
+    // Only calculate costs for files that store data
+    if (result.type !== 'Avg' && result.type !== 'Unknown') {
+      try {
+        await calculateCosts(parseInt(site_id));
+      } catch (calcErr) {
+        console.error('Cost calc error:', calcErr.message);
+      }
     }
 
     res.json(result);
