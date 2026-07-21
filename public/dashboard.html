@@ -18,7 +18,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .badge{background:var(--inp);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--sub)}
 .btn-sm{background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;transition:all .15s}
 .btn-sm:hover{border-color:var(--gold-d);color:var(--gold)}
-.controls{background:var(--card2);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0}
+.controls{background:var(--card2);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
 .ctrl-lbl{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
 .dt{background:var(--inp);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-family:'Inter',sans-serif;font-size:12px;color:var(--text);outline:none;transition:border-color .15s}
 .dt:focus{border-color:var(--gold-d)}
@@ -27,9 +27,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .vt{display:flex;background:var(--inp);border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .vb{padding:6px 12px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:'Inter',sans-serif;transition:all .15s}
 .vb.active{background:rgba(201,163,71,.15);color:var(--gold)}
-.btn-load{background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:8px;padding:7px 16px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#000;cursor:pointer;transition:opacity .15s;margin-left:auto;letter-spacing:.5px}
+.nav-group{display:flex;align-items:center;gap:6px}
+.nav-btn{background:var(--inp);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.nav-btn:hover{border-color:var(--gold-d);color:var(--gold)}
+.period-lbl{font-size:12px;color:var(--gold);font-weight:600;min-width:120px;text-align:center;background:rgba(201,163,71,.08);border:1px solid rgba(201,163,71,.2);border-radius:8px;padding:6px 12px}
+.btn-load{background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:8px;padding:7px 16px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#000;cursor:pointer;transition:opacity .15s;letter-spacing:.5px}
 .btn-load:hover{opacity:.85}
-.sep{width:1px;height:24px;background:var(--border);margin:0 4px}
+.sep{width:1px;height:24px;background:var(--border);margin:0 2px}
 .content{flex:1;padding:20px 24px;overflow-y:auto}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 .kc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:border-color .2s}
@@ -87,6 +91,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div>
 
 <div class="controls">
+  <!-- DATE RANGE -->
   <div style="display:flex;align-items:center;gap:6px">
     <span class="ctrl-lbl">From</span>
     <input type="date" class="dt" id="fromDate">
@@ -96,7 +101,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <input type="date" class="dt" id="toDate">
   </div>
   <div class="sep"></div>
-  <div style="display:flex;gap:4px">
+
+  <!-- PRESETS -->
+  <div style="display:flex;gap:4px;flex-wrap:wrap">
     <button class="pb" onclick="setPreset('today',this)">Today</button>
     <button class="pb" onclick="setPreset('week',this)">This Week</button>
     <button class="pb active" onclick="setPreset('month',this)">This Month</button>
@@ -104,6 +111,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <button class="pb" onclick="setPreset('last3m',this)">Last 3 Months</button>
   </div>
   <div class="sep"></div>
+
+  <!-- VIEW TOGGLE -->
   <div style="display:flex;align-items:center;gap:6px">
     <span class="ctrl-lbl">View</span>
     <div class="vt">
@@ -113,7 +122,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <button class="vb" onclick="setView('monthly',this)">Monthly</button>
     </div>
   </div>
-  <button class="btn-load" onclick="loadData()">↻ Load Data</button>
+  <div class="sep"></div>
+
+  <!-- NAVIGATION ARROWS + LOAD -->
+  <div class="nav-group" style="margin-left:auto">
+    <button class="nav-btn" onclick="navigate(-1)" title="Previous period">◀</button>
+    <div class="period-lbl" id="periodLbl">—</div>
+    <button class="nav-btn" onclick="navigate(1)" title="Next period">▶</button>
+    <button class="btn-load" onclick="loadData()">↻ Refresh</button>
+  </div>
 </div>
 
 <div class="content">
@@ -121,14 +138,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <!-- UNIT USAGE PANEL -->
   <div class="cc" style="margin-bottom:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div>
-        <div class="ct">Unit Usage</div>
-        <div class="cs">Monitoring points (breakers/circuits) registered for this site</div>
-      </div>
+      <div><div class="ct">Unit Usage</div><div class="cs">Monitoring points (breakers/circuits) registered for this site</div></div>
       <div id="unitStatusBadge" style="font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;background:rgba(76,175,125,.12);color:#4CAF7D;border:1px solid rgba(76,175,125,.25)">OK</div>
     </div>
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
-      <div style="font-size:36px;font-weight:700;color:var(--text)" id="unitCount">—</div>
+      <div style="font-size:36px;font-weight:700" id="unitCount">—</div>
       <div>
         <div style="font-size:12px;color:var(--muted)" id="unitMax">of — units used</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px" id="unitFree">— units available</div>
@@ -145,18 +159,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div style="border-top:1px solid var(--border);padding-top:12px">
       <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Registered Breakers / Circuits</div>
-      <div id="breakerTags" style="display:flex;flex-wrap:wrap;gap:6px">
-        <span style="font-size:11px;color:var(--muted)">Loading...</span>
-      </div>
+      <div id="breakerTags" style="display:flex;flex-wrap:wrap;gap:6px"><span style="font-size:11px;color:var(--muted)">Loading...</span></div>
     </div>
-    <div style="margin-top:10px;font-size:11px;color:var(--muted)">
-      Need more units? Contact <strong style="color:var(--gold-d)">Venora Lanka Power Panels (Pvt) Ltd</strong> to upgrade your plan.
-    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted)">Need more units? Contact <strong style="color:var(--gold-d)">Venora Lanka Power Panels (Pvt) Ltd</strong> to upgrade your plan.</div>
   </div>
 
   <!-- KPI CARDS -->
   <div class="kpi-grid">
-    <div class="kc g"><div class="kdot g"></div><div class="klbl">Total Consumption</div><div class="kval" id="k-kwh">—<span class="u">kWh</span></div><div class="ksub">Selected period</div></div>
+    <div class="kc g"><div class="kdot g"></div><div class="klbl">Total Consumption</div><div class="kval" id="k-kwh">—<span class="u">kWh</span></div><div class="ksub" id="k-period">Selected period</div></div>
     <div class="kc g"><div class="kdot g"></div><div class="klbl">Total Cost</div><div class="kval" id="k-cost">—</div><div class="ksub">LKR for period</div></div>
     <div class="kc b"><div class="kdot b"></div><div class="klbl">Max Demand</div><div class="kval" id="k-kva">—<span class="u">kVA</span></div><div class="ksub">Peak recorded</div></div>
     <div class="kc g"><div class="kdot g"></div><div class="klbl">Average Tariff</div><div class="kval" id="k-tariff">—<span class="u">LKR/kWh</span></div><div class="ksub">Blended rate</div></div>
@@ -186,15 +196,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <!-- ROW 2: SEPARATE PEAK / DAY / OFF-PEAK COST -->
   <div class="cr cr3">
     <div class="cc">
-      <div class="ch"><div><div class="ct" style="color:var(--peak)">● Peak Cost (LKR)</div><div class="cs">17:00 – 22:00 · LKR 39.00 per kWh</div></div></div>
+      <div class="ch"><div><div class="ct" style="color:var(--peak)">● Peak Cost (LKR)</div><div class="cs">17:00–22:00 · LKR 39.00/kWh</div></div></div>
       <div class="cw" style="height:160px"><canvas id="peakCostChart"></canvas></div>
     </div>
     <div class="cc">
-      <div class="ch"><div><div class="ct" style="color:var(--day)">● Day Cost (LKR)</div><div class="cs">09:00 – 17:00 · LKR 19.00 per kWh</div></div></div>
+      <div class="ch"><div><div class="ct" style="color:var(--day)">● Day Cost (LKR)</div><div class="cs">09:00–17:00 · LKR 19.00/kWh</div></div></div>
       <div class="cw" style="height:160px"><canvas id="dayCostChart"></canvas></div>
     </div>
     <div class="cc">
-      <div class="ch"><div><div class="ct" style="color:var(--op)">● Off-Peak Cost (LKR)</div><div class="cs">22:00 – 09:00 · LKR 16.50 per kWh</div></div></div>
+      <div class="ch"><div><div class="ct" style="color:var(--op)">● Off-Peak Cost (LKR)</div><div class="cs">22:00–09:00 · LKR 16.50/kWh</div></div></div>
       <div class="cw" style="height:160px"><canvas id="opCostChart"></canvas></div>
     </div>
   </div>
@@ -202,15 +212,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <!-- ROW 3: SEPARATE PEAK / DAY / OFF-PEAK USAGE -->
   <div class="cr cr3">
     <div class="cc">
-      <div class="ch"><div><div class="ct" style="color:var(--peak)">● Peak Usage (kWh)</div><div class="cs">17:00 – 22:00</div></div></div>
+      <div class="ch"><div><div class="ct" style="color:var(--peak)">● Peak Usage (kWh)</div><div class="cs">17:00–22:00</div></div></div>
       <div class="cw" style="height:160px"><canvas id="peakUsageChart"></canvas></div>
     </div>
     <div class="cc">
-      <div class="ch"><div><div class="ct" style="color:var(--day)">● Day Usage (kWh)</div><div class="cs">09:00 – 17:00</div></div></div>
+      <div class="ch"><div><div class="ct" style="color:var(--day)">● Day Usage (kWh)</div><div class="cs">09:00–17:00</div></div></div>
       <div class="cw" style="height:160px"><canvas id="dayUsageChart"></canvas></div>
     </div>
     <div class="cc">
-      <div class="ch"><div><div class="ct" style="color:var(--op)">● Off-Peak Usage (kWh)</div><div class="cs">22:00 – 09:00</div></div></div>
+      <div class="ch"><div><div class="ct" style="color:var(--op)">● Off-Peak Usage (kWh)</div><div class="cs">22:00–09:00</div></div></div>
       <div class="cw" style="height:160px"><canvas id="opUsageChart"></canvas></div>
     </div>
   </div>
@@ -255,6 +265,7 @@ const API_URL = 'https://venora-cloud-server-production.up.railway.app';
 const API_KEY = 'venora-super-secret-key-2025-change-this';
 let user = null, charts = {}, view = 'daily';
 
+// ── AUTH ──────────────────────────────────────────────────────────────────────
 function checkAuth() {
   const s = sessionStorage.getItem('user');
   if (!s) { window.location.href = 'login.html'; return false; }
@@ -265,7 +276,33 @@ function checkAuth() {
 }
 function logout() { sessionStorage.removeItem('user'); window.location.href = 'login.html'; }
 
+// ── DATE HELPERS ──────────────────────────────────────────────────────────────
 function fd(d) { return d.toISOString().split('T')[0]; }
+
+function updatePeriodLabel() {
+  const from = document.getElementById('fromDate').value;
+  const to   = document.getElementById('toDate').value;
+  if (!from) return;
+  const f = new Date(from);
+  const t = new Date(to);
+  let label = '';
+  if (view === 'monthly') {
+    label = f.toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+  } else if (view === 'weekly') {
+    label = f.toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) +
+            ' – ' + t.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  } else if (view === 'hourly') {
+    label = f.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  } else {
+    label = f.toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) +
+            ' – ' + t.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  }
+  const el = document.getElementById('periodLbl');
+  if (el) el.textContent = label;
+
+  const kp = document.getElementById('k-period');
+  if (kp) kp.textContent = label;
+}
 
 function setPreset(p, el) {
   document.querySelectorAll('.pb').forEach(b => b.classList.remove('active'));
@@ -277,32 +314,46 @@ function setPreset(p, el) {
   else if (p === 'last30'){ const d = new Date(n); d.setDate(d.getDate() - 30); from = fd(d); }
   else if (p === 'last3m'){ const d = new Date(n); d.setMonth(d.getMonth() - 3); from = fd(d); }
   document.getElementById('fromDate').value = from;
-  document.getElementById('toDate').value = to;
+  document.getElementById('toDate').value   = to;
+  updatePeriodLabel();
+  loadData();
 }
-function setPreset(p, el) {
+
+function setView(v, el) {
+  view = v;
+  document.querySelectorAll('.vb').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  updatePeriodLabel();
+  loadData();
+}
+
+function navigate(direction) {
+  const from = new Date(document.getElementById('fromDate').value);
+  const to   = new Date(document.getElementById('toDate').value);
+
+  if (view === 'hourly' || view === 'daily') {
+    from.setDate(from.getDate() + direction);
+    to.setDate(to.getDate() + direction);
+  } else if (view === 'weekly') {
+    from.setDate(from.getDate() + direction * 7);
+    to.setDate(to.getDate() + direction * 7);
+  } else if (view === 'monthly') {
+    from.setMonth(from.getMonth() + direction);
+    to.setMonth(to.getMonth() + direction);
+  }
+
+  // Don't go into the future
+  const today = new Date();
+  if (to > today) to.setTime(today.getTime());
+
+  document.getElementById('fromDate').value = fd(from);
+  document.getElementById('toDate').value   = fd(to);
   document.querySelectorAll('.pb').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  const n = new Date(); let from, to = fd(n);
-  if (p === 'today')  { from = to; }
-  else if (p === 'week')  { const d = new Date(n); d.setDate(d.getDate() - d.getDay()); from = fd(d); }
-  else if (p === 'month') { from = fd(new Date(n.getFullYear(), n.getMonth(), 1)); }
-  else if (p === 'last30'){ const d = new Date(n); d.setDate(d.getDate() - 30); from = fd(d); }
-  else if (p === 'last3m'){ const d = new Date(n); d.setMonth(d.getMonth() - 3); from = fd(d); }
-  document.getElementById('fromDate').value = from;
-  document.getElementById('toDate').value = to;
+  updatePeriodLabel();
   loadData();
 }
-function setView(v, el) {
-  view = v;
-  document.querySelectorAll('.vb').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-}
-function setView(v, el) {
-  view = v;
-  document.querySelectorAll('.vb').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  loadData();
-}
+
+// ── NUMBER FORMAT ─────────────────────────────────────────────────────────────
 function fN(n, d=1) {
   if (n === null || n === undefined || isNaN(n)) return '—';
   n = parseFloat(n);
@@ -312,6 +363,7 @@ function fN(n, d=1) {
 }
 function fL(n) { return 'LKR ' + fN(n, 0); }
 
+// ── PERIOD LABEL ──────────────────────────────────────────────────────────────
 function fP(p, v) {
   const d = new Date(p);
   if (v === 'hourly')  return d.toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
@@ -321,15 +373,13 @@ function fP(p, v) {
   return p;
 }
 
+// ── CHART DEFAULTS ────────────────────────────────────────────────────────────
 const TD = {
-  responsive: true, maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: { backgroundColor:'#10141F', borderColor:'#1E2840', borderWidth:1, titleColor:'#C9A347', bodyColor:'#F0EDE6', padding:10 }
-  },
-  scales: {
-    x: { grid:{ color:'rgba(30,40,64,.5)' }, ticks:{ color:'#6B7191', font:{ size:10 }, maxTicksLimit:10 } },
-    y: { grid:{ color:'rgba(30,40,64,.5)' }, ticks:{ color:'#6B7191', font:{ size:10 } } }
+  responsive:true, maintainAspectRatio:false,
+  plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#10141F',borderColor:'#1E2840',borderWidth:1,titleColor:'#C9A347',bodyColor:'#F0EDE6',padding:10} },
+  scales:{
+    x:{grid:{color:'rgba(30,40,64,.5)'},ticks:{color:'#6B7191',font:{size:10},maxTicksLimit:10}},
+    y:{grid:{color:'rgba(30,40,64,.5)'},ticks:{color:'#6B7191',font:{size:10}}}
   }
 };
 
@@ -337,24 +387,22 @@ function mkBar(id, labels, datasets, yf) {
   if (charts[id]) charts[id].destroy();
   const ctx = document.getElementById(id).getContext('2d');
   charts[id] = new Chart(ctx, {
-    type:'bar', data:{ labels, datasets },
-    options:{
-      ...TD,
-      plugins:{ ...TD.plugins, tooltip:{ ...TD.plugins.tooltip, callbacks:{ label:c=>' '+(yf?yf(c.raw):c.raw) } } },
-      scales:{ x:{ ...TD.scales.x, stacked:true }, y:{ ...TD.scales.y, stacked:true, ticks:{ ...TD.scales.y.ticks, callback:v=>yf?yf(v):v } } }
+    type:'bar', data:{labels,datasets},
+    options:{...TD,
+      plugins:{...TD.plugins,tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+(yf?yf(c.raw):c.raw)}}},
+      scales:{x:{...TD.scales.x,stacked:true},y:{...TD.scales.y,stacked:true,ticks:{...TD.scales.y.ticks,callback:v=>yf?yf(v):v}}}
     }
   });
 }
 
-function mkSingleBar(id, labels, data, bgColor, borderColor, yf) {
+function mkSingleBar(id, labels, data, bg, bc, yf) {
   if (charts[id]) charts[id].destroy();
   const ctx = document.getElementById(id).getContext('2d');
   charts[id] = new Chart(ctx, {
-    type:'bar', data:{ labels, datasets:[{ data, backgroundColor:bgColor, borderColor, borderWidth:1, borderRadius:3 }] },
-    options:{
-      ...TD,
-      plugins:{ ...TD.plugins, tooltip:{ ...TD.plugins.tooltip, callbacks:{ label:c=>' '+(yf?yf(c.raw):c.raw) } } },
-      scales:{ x:{ ...TD.scales.x, grid:{ display:false } }, y:{ ...TD.scales.y, ticks:{ ...TD.scales.y.ticks, callback:v=>yf?yf(v):v } } }
+    type:'bar', data:{labels,datasets:[{data,backgroundColor:bg,borderColor:bc,borderWidth:1,borderRadius:3}]},
+    options:{...TD,
+      plugins:{...TD.plugins,tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+(yf?yf(c.raw):c.raw)}}},
+      scales:{x:{...TD.scales.x,grid:{display:false}},y:{...TD.scales.y,ticks:{...TD.scales.y.ticks,callback:v=>yf?yf(v):v}}}
     }
   });
 }
@@ -363,15 +411,11 @@ function mkPie(id, labels, data, colors) {
   if (charts[id]) charts[id].destroy();
   const ctx = document.getElementById(id).getContext('2d');
   charts[id] = new Chart(ctx, {
-    type:'doughnut',
-    data:{ labels, datasets:[{ data, backgroundColor:colors, borderColor:'#10141F', borderWidth:3 }] },
-    options:{
-      responsive:true, maintainAspectRatio:false, cutout:'62%',
-      plugins:{
-        legend:{ position:'bottom', labels:{ color:'#9499B5', font:{ size:11 }, padding:10, boxWidth:10 } },
-        tooltip:{ backgroundColor:'#10141F', borderColor:'#1E2840', borderWidth:1, titleColor:'#C9A347', bodyColor:'#F0EDE6',
-          callbacks:{ label:c=>' '+fN(c.raw,1)+' ('+((c.raw/c.dataset.data.reduce((a,b)=>a+b,0))*100).toFixed(1)+'%)' } }
-      }
+    type:'doughnut', data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#10141F',borderWidth:3}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{position:'bottom',labels:{color:'#9499B5',font:{size:11},padding:10,boxWidth:10}},
+        tooltip:{backgroundColor:'#10141F',borderColor:'#1E2840',borderWidth:1,titleColor:'#C9A347',bodyColor:'#F0EDE6',
+          callbacks:{label:c=>' '+fN(c.raw,1)+' ('+((c.raw/c.dataset.data.reduce((a,b)=>a+b,0))*100).toFixed(1)+'%)'}}}
     }
   });
 }
@@ -380,135 +424,104 @@ function mkLine(id, labels, datasets) {
   if (charts[id]) charts[id].destroy();
   const ctx = document.getElementById(id).getContext('2d');
   charts[id] = new Chart(ctx, {
-    type:'line', data:{ labels, datasets },
-    options:{
-      ...TD,
-      plugins:{ ...TD.plugins, tooltip:{ ...TD.plugins.tooltip, callbacks:{ label:c=>' '+fN(c.raw,2)+' kVA' } } },
-      scales:{ ...TD.scales, y:{ ...TD.scales.y, ticks:{ ...TD.scales.y.ticks, callback:v=>fN(v,1) } } }
+    type:'line', data:{labels,datasets},
+    options:{...TD,
+      plugins:{...TD.plugins,tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+fN(c.raw,2)+' kVA'}}},
+      scales:{...TD.scales,y:{...TD.scales.y,ticks:{...TD.scales.y.ticks,callback:v=>fN(v,1)}}}
     }
   });
 }
 
+// ── UNIT PANEL ────────────────────────────────────────────────────────────────
 function updateUnitPanel(d) {
   if (!d) return;
   const used = d.units_used || 0;
   const max  = d.max_units  || 10;
   const pct  = d.percentage || 0;
   const free = d.units_free || 0;
-
   document.getElementById('unitCount').textContent = used;
   document.getElementById('unitMax').textContent   = 'of ' + max + ' units used';
-  document.getElementById('unitFree').textContent  = free + ' unit' + (free !== 1 ? 's' : '') + ' available';
+  document.getElementById('unitFree').textContent  = free + ' unit' + (free!==1?'s':'') + ' available';
   document.getElementById('unitPct').textContent   = pct + '%';
-
   const bar   = document.getElementById('unitBar');
   const badge = document.getElementById('unitStatusBadge');
   bar.style.width = pct + '%';
-
   if (pct >= 90) {
-    bar.style.background   = '#E05A5A';
-    badge.style.background = 'rgba(224,90,90,.12)';
-    badge.style.color      = '#E05A5A';
-    badge.style.border     = '1px solid rgba(224,90,90,.25)';
-    badge.textContent      = 'Limit Reached';
+    bar.style.background='#E05A5A';badge.style.background='rgba(224,90,90,.12)';badge.style.color='#E05A5A';badge.style.border='1px solid rgba(224,90,90,.25)';badge.textContent='Limit Reached';
   } else if (pct >= 70) {
-    bar.style.background   = '#C9A347';
-    badge.style.background = 'rgba(201,163,71,.12)';
-    badge.style.color      = '#C9A347';
-    badge.style.border     = '1px solid rgba(201,163,71,.25)';
-    badge.textContent      = 'Near Limit';
+    bar.style.background='#C9A347';badge.style.background='rgba(201,163,71,.12)';badge.style.color='#C9A347';badge.style.border='1px solid rgba(201,163,71,.25)';badge.textContent='Near Limit';
   } else {
-    bar.style.background   = '#4CAF7D';
-    badge.style.background = 'rgba(76,175,125,.12)';
-    badge.style.color      = '#4CAF7D';
-    badge.style.border     = '1px solid rgba(76,175,125,.25)';
-    badge.textContent      = 'OK';
+    bar.style.background='#4CAF7D';badge.style.background='rgba(76,175,125,.12)';badge.style.color='#4CAF7D';badge.style.border='1px solid rgba(76,175,125,.25)';badge.textContent='OK';
   }
-
   const container = document.getElementById('breakerTags');
   if (d.breaker_names && d.breaker_names.length > 0) {
-    container.innerHTML = d.breaker_names.map((name, i) =>
-      '<span style="background:var(--inp);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--sub)">' +
-      (i+1) + '. ' + name + '</span>'
+    container.innerHTML = d.breaker_names.map((n,i)=>
+      '<span style="background:var(--inp);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--sub)">'+(i+1)+'. '+n+'</span>'
     ).join('');
   } else {
     container.innerHTML = '<span style="font-size:11px;color:var(--muted)">No breakers registered yet</span>';
   }
 }
 
+// ── UPDATE KPIs ───────────────────────────────────────────────────────────────
 function updateKPIs(k) {
-  document.getElementById('k-kwh').innerHTML    = fN(k.total_kwh,2) + '<span class="u">kWh</span>';
+  document.getElementById('k-kwh').innerHTML    = fN(k.total_kwh,2)+'<span class="u">kWh</span>';
   document.getElementById('k-cost').textContent = fL(k.total_cost);
-  document.getElementById('k-kva').innerHTML    = fN(k.max_kva,2) + '<span class="u">kVA</span>';
-  document.getElementById('k-tariff').innerHTML = fN(k.avg_tariff,2) + '<span class="u">LKR/kWh</span>';
+  document.getElementById('k-kva').innerHTML    = fN(k.max_kva,2)+'<span class="u">kVA</span>';
+  document.getElementById('k-tariff').innerHTML = fN(k.avg_tariff,2)+'<span class="u">LKR/kWh</span>';
   document.getElementById('k-peak').textContent = fL(k.peak_cost);
   document.getElementById('k-day').textContent  = fL(k.day_cost);
   document.getElementById('k-op').textContent   = fL(k.offpeak_cost);
   document.getElementById('k-save').textContent = fL(k.offpeak_savings);
 }
 
+// ── UPDATE CHARTS ─────────────────────────────────────────────────────────────
 function updateCharts(ts, tou) {
   if (!ts || !ts.length) return;
   const labels = ts.map(r => fP(r.period, view));
-
-  mkBar('costChart', labels, [
-    { label:'Peak',     data:ts.map(r=>r.peak_cost),    backgroundColor:'rgba(224,90,90,.8)' },
-    { label:'Day',      data:ts.map(r=>r.day_cost),     backgroundColor:'rgba(201,163,71,.8)' },
-    { label:'Off-Peak', data:ts.map(r=>r.offpeak_cost), backgroundColor:'rgba(76,175,125,.8)' },
-  ], v=>'LKR '+fN(v,0));
-
-  mkBar('usageChart', labels, [
-    { label:'Peak',     data:ts.map(r=>r.peak_kwh),    backgroundColor:'rgba(224,90,90,.8)' },
-    { label:'Day',      data:ts.map(r=>r.day_kwh),     backgroundColor:'rgba(201,163,71,.8)' },
-    { label:'Off-Peak', data:ts.map(r=>r.offpeak_kwh), backgroundColor:'rgba(76,175,125,.8)' },
-  ], v=>fN(v,1)+' kWh');
-
-  mkSingleBar('peakCostChart',  labels, ts.map(r=>r.peak_cost),    'rgba(224,90,90,.8)',  '#E05A5A', v=>'LKR '+fN(v,0));
-  mkSingleBar('dayCostChart',   labels, ts.map(r=>r.day_cost),     'rgba(201,163,71,.8)', '#C9A347', v=>'LKR '+fN(v,0));
-  mkSingleBar('opCostChart',    labels, ts.map(r=>r.offpeak_cost), 'rgba(76,175,125,.8)', '#4CAF7D', v=>'LKR '+fN(v,0));
-  mkSingleBar('peakUsageChart', labels, ts.map(r=>r.peak_kwh),     'rgba(224,90,90,.8)',  '#E05A5A', v=>fN(v,1)+' kWh');
-  mkSingleBar('dayUsageChart',  labels, ts.map(r=>r.day_kwh),      'rgba(201,163,71,.8)', '#C9A347', v=>fN(v,1)+' kWh');
-  mkSingleBar('opUsageChart',   labels, ts.map(r=>r.offpeak_kwh),  'rgba(76,175,125,.8)', '#4CAF7D', v=>fN(v,1)+' kWh');
-
-  mkLine('kvaChart', labels, [{
-    label:'Max kVA', data:ts.map(r=>r.max_kva),
-    borderColor:'#5A9EE0', backgroundColor:'rgba(90,158,224,.1)',
-    borderWidth:2, pointRadius:2, fill:true, tension:.3
-  }]);
-
+  mkBar('costChart',labels,[
+    {label:'Peak',    data:ts.map(r=>r.peak_cost),   backgroundColor:'rgba(224,90,90,.8)'},
+    {label:'Day',     data:ts.map(r=>r.day_cost),    backgroundColor:'rgba(201,163,71,.8)'},
+    {label:'Off-Peak',data:ts.map(r=>r.offpeak_cost),backgroundColor:'rgba(76,175,125,.8)'},
+  ],v=>'LKR '+fN(v,0));
+  mkBar('usageChart',labels,[
+    {label:'Peak',    data:ts.map(r=>r.peak_kwh),   backgroundColor:'rgba(224,90,90,.8)'},
+    {label:'Day',     data:ts.map(r=>r.day_kwh),    backgroundColor:'rgba(201,163,71,.8)'},
+    {label:'Off-Peak',data:ts.map(r=>r.offpeak_kwh),backgroundColor:'rgba(76,175,125,.8)'},
+  ],v=>fN(v,1)+' kWh');
+  mkSingleBar('peakCostChart', labels,ts.map(r=>r.peak_cost),   'rgba(224,90,90,.8)', '#E05A5A',v=>'LKR '+fN(v,0));
+  mkSingleBar('dayCostChart',  labels,ts.map(r=>r.day_cost),    'rgba(201,163,71,.8)','#C9A347',v=>'LKR '+fN(v,0));
+  mkSingleBar('opCostChart',   labels,ts.map(r=>r.offpeak_cost),'rgba(76,175,125,.8)','#4CAF7D',v=>'LKR '+fN(v,0));
+  mkSingleBar('peakUsageChart',labels,ts.map(r=>r.peak_kwh),   'rgba(224,90,90,.8)', '#E05A5A',v=>fN(v,1)+' kWh');
+  mkSingleBar('dayUsageChart', labels,ts.map(r=>r.day_kwh),    'rgba(201,163,71,.8)','#C9A347',v=>fN(v,1)+' kWh');
+  mkSingleBar('opUsageChart',  labels,ts.map(r=>r.offpeak_kwh),'rgba(76,175,125,.8)','#4CAF7D',v=>fN(v,1)+' kWh');
+  mkLine('kvaChart',labels,[{label:'Max kVA',data:ts.map(r=>r.max_kva),borderColor:'#5A9EE0',backgroundColor:'rgba(90,158,224,.1)',borderWidth:2,pointRadius:2,fill:true,tension:.3}]);
   if (tou && tou.length) {
-    const tlbl = tou.map(t => t.period + ' (' + t.hours + ')');
+    const tlbl = tou.map(t=>t.period+' ('+t.hours+')');
     const col  = ['#E05A5A','#C9A347','#4CAF7D'];
-    mkPie('usagePie', tlbl, tou.map(t=>t.kwh),  col);
-    mkPie('costPie',  tlbl, tou.map(t=>t.cost), col);
+    mkPie('usagePie',tlbl,tou.map(t=>t.kwh), col);
+    mkPie('costPie', tlbl,tou.map(t=>t.cost),col);
   }
 }
 
+// ── LOAD DATA ─────────────────────────────────────────────────────────────────
 async function loadData() {
   if (!checkAuth()) return;
   const from = document.getElementById('fromDate').value;
   const to   = document.getElementById('toDate').value;
   if (!from || !to) { alert('Please select a date range'); return; }
-
   document.getElementById('ov').style.display = 'flex';
-
   try {
     const [dataResp, unitResp] = await Promise.all([
-      fetch(`${API_URL}/api/analytics/dashboard?site_id=${user.site_id}&from=${from}&to=${to}&group_by=${view}`,
-        { headers:{ 'x-api-key': API_KEY } }),
-      fetch(`${API_URL}/api/analytics/unit-usage?site_id=${user.site_id}`,
-        { headers:{ 'x-api-key': API_KEY } })
+      fetch(`${API_URL}/api/analytics/dashboard?site_id=${user.site_id}&from=${from}&to=${to}&group_by=${view}`,{headers:{'x-api-key':API_KEY}}),
+      fetch(`${API_URL}/api/analytics/unit-usage?site_id=${user.site_id}`,{headers:{'x-api-key':API_KEY}})
     ]);
-
     const data     = await dataResp.json();
     const unitData = await unitResp.json();
-
     if (data.error) throw new Error(data.error);
-
     updateUnitPanel(unitData);
     updateKPIs(data.kpis);
     updateCharts(data.time_series, data.tou_breakdown);
-
     if (data.tariff && data.tariff.contract_demand_kva) {
       document.getElementById('climit').textContent = data.tariff.contract_demand_kva;
     }
@@ -520,10 +533,12 @@ async function loadData() {
   }
 }
 
+// ── INIT ──────────────────────────────────────────────────────────────────────
 if (checkAuth()) {
   const n = new Date();
   document.getElementById('fromDate').value = fd(new Date(n.getFullYear(), n.getMonth(), 1));
   document.getElementById('toDate').value   = fd(n);
+  updatePeriodLabel();
   loadData();
 }
 </script>
