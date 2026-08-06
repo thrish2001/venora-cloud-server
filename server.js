@@ -9,19 +9,20 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Load routes
-app.use('/api/upload',    require('./routes/upload'));
-app.use('/api/analytics', require('./routes/analytics'));
-app.use('/api/sites',     require('./routes/sites'));
-app.use('/api/tariff',    require('./routes/tariff'));
-app.use('/api/auth',      require('./routes/auth'));
+// ── ROUTES ────────────────────────────────────────────────────────────────────
+app.use('/api/upload',     require('./routes/upload'));
+app.use('/api/analytics',  require('./routes/analytics'));
+app.use('/api/sites',      require('./routes/sites'));
+app.use('/api/tariff',     require('./routes/tariff'));
+app.use('/api/auth',       require('./routes/auth'));
+app.use('/api/production', require('./routes/production'));
 
-// Health check
+// ── HEALTH CHECK ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({ status: 'Venora Cloud Server is running', version: '2.0' });
 });
 
-// Expose cost calculation endpoint
+// ── MANUAL COST CALCULATION ───────────────────────────────────────────────────
 app.post('/api/calculate-costs', async (req, res) => {
   const key = req.headers['x-api-key'];
   if (key !== process.env.API_SECRET_KEY) {
@@ -32,10 +33,12 @@ app.post('/api/calculate-costs', async (req, res) => {
   res.json({ success: true });
 });
 
-// Create all database tables on first start
+// ── DATABASE SETUP ────────────────────────────────────────────────────────────
 async function initDB() {
   const client = await pool.connect();
   try {
+
+    // Sites table
     await client.query(`
       CREATE TABLE IF NOT EXISTS sites (
         id SERIAL PRIMARY KEY,
@@ -44,11 +47,12 @@ async function initDB() {
         contract_demand_kva DECIMAL DEFAULT 100,
         max_units INT DEFAULT 10,
         max_users INT DEFAULT 2
-      );
+      )
     `);
     await client.query(`ALTER TABLE sites ADD COLUMN IF NOT EXISTS max_units INT DEFAULT 10`);
     await client.query(`ALTER TABLE sites ADD COLUMN IF NOT EXISTS max_users INT DEFAULT 2`);
 
+    // Tariff config table
     await client.query(`
       CREATE TABLE IF NOT EXISTS tariff_config (
         id SERIAL PRIMARY KEY,
@@ -59,9 +63,10 @@ async function initDB() {
         unit_rate_offpeak DECIMAL DEFAULT 0,
         peak_start INT DEFAULT 17,
         peak_end INT DEFAULT 22
-      );
+      )
     `);
 
+    // Energy readings table
     await client.query(`
       CREATE TABLE IF NOT EXISTS energy_readings (
         id SERIAL PRIMARY KEY,
@@ -72,14 +77,16 @@ async function initDB() {
         kva DECIMAL,
         voltage DECIMAL,
         uploaded_at TIMESTAMP DEFAULT NOW()
-      );
+      )
     `);
 
+    // Unique index to prevent duplicate readings
     await client.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_readings_unique
       ON energy_readings (site_id, breaker_name, recorded_at)
     `).catch(() => {});
 
+    // Daily cost summary table
     await client.query(`
       CREATE TABLE IF NOT EXISTS daily_cost_summary (
         id SERIAL PRIMARY KEY,
@@ -91,9 +98,10 @@ async function initDB() {
         max_kva DECIMAL,
         total_cost_lkr DECIMAL,
         UNIQUE(site_id, summary_date)
-      );
+      )
     `);
 
+    // Users table
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -105,7 +113,22 @@ async function initDB() {
         role VARCHAR(20) DEFAULT 'viewer',
         active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT NOW()
-      );
+      )
+    `);
+
+    // Production data table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS production_data (
+        id SERIAL PRIMARY KEY,
+        site_id INT REFERENCES sites(id),
+        production_date DATE NOT NULL,
+        shift VARCHAR(20) NOT NULL,
+        units_produced DECIMAL NOT NULL,
+        unit_type VARCHAR(50) DEFAULT 'units',
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(site_id, production_date, shift)
+      )
     `);
 
     console.log('Database tables ready');
@@ -114,6 +137,7 @@ async function initDB() {
   }
 }
 
+// ── START SERVER ──────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, async () => {
   await initDB();
