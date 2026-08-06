@@ -8,7 +8,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--gold:#C9A347;--gold-d:#9A7A2E;--gold-l:#F0E0A8;--bg:#08090F;--card:#10141F;--card2:#131829;--inp:#181D2C;--border:#1E2840;--text:#F0EDE6;--muted:#6B7191;--sub:#9499B5;--peak:#E05A5A;--day:#C9A347;--op:#4CAF7D;--blue:#5A9EE0}
+:root{--gold:#C9A347;--gold-d:#9A7A2E;--gold-l:#F0E0A8;--bg:#08090F;--card:#10141F;--card2:#131829;--inp:#181D2C;--border:#1E2840;--text:#F0EDE6;--muted:#6B7191;--sub:#9499B5;--peak:#E05A5A;--day:#C9A347;--op:#4CAF7D;--blue:#5A9EE0;--purple:#A855F7}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
 .topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;flex-shrink:0}
 .brand-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);letter-spacing:1px}
@@ -44,13 +44,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .kc.g::after{background:var(--gold)}.kc.p::after{background:var(--peak)}.kc.d::after{background:var(--day)}.kc.o::after{background:var(--op)}.kc.b::after{background:var(--blue)}
 .kdot{width:8px;height:8px;border-radius:50%;margin-bottom:10px}
 .kdot.g{background:var(--gold)}.kdot.p{background:var(--peak)}.kdot.d{background:var(--day)}.kdot.o{background:var(--op)}.kdot.b{background:var(--blue)}
-.klbl{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
-.kval{font-size:22px;font-weight:700;line-height:1;margin-bottom:4px}
-.kval .u{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
-.ksub{font-size:10px;color:var(--muted)}
 .cr{display:grid;gap:12px;margin-bottom:12px}
 .cr2{grid-template-columns:2fr 1fr}
 .cr1{grid-template-columns:1fr}
+.cr2e{grid-template-columns:1fr 1fr}
 .cc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
 .ch{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
 .ct{font-size:13px;font-weight:600}
@@ -59,6 +56,31 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
 .li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sub)}
 .ld{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+/* Section divider */
+.section-divider{display:flex;align-items:center;gap:16px;margin:24px 0 16px;padding:14px 20px;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.2);border-radius:12px}
+.section-divider .icon{font-size:20px}
+.section-divider .title{font-size:14px;font-weight:600;color:var(--purple)}
+.section-divider .sub{font-size:11px;color:var(--muted);margin-top:2px}
+/* Production form */
+.prod-grid{display:grid;grid-template-columns:repeat(5,1fr) auto;gap:10px;align-items:end;margin-bottom:16px}
+.fg label{display:block;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.fg input,.fg select{background:var(--inp);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:'Inter',sans-serif;font-size:12px;color:var(--text);outline:none;transition:border-color .15s;width:100%}
+.fg input:focus,.fg select:focus{border-color:var(--gold-d)}
+.btn-add{background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:8px;padding:9px 20px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#000;cursor:pointer;white-space:nowrap;height:37px}
+.prod-table{width:100%;border-collapse:collapse;margin-top:12px}
+.prod-table th{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;text-align:left;padding:0 10px 10px;border-bottom:1px solid var(--border)}
+.prod-table td{padding:10px;font-size:12px;color:var(--text);border-bottom:1px solid rgba(30,40,64,.5)}
+.prod-table tr:last-child td{border-bottom:none}
+.shift-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600}
+.sm{background:rgba(201,163,71,.15);color:var(--gold)}
+.se{background:rgba(90,158,224,.15);color:var(--blue)}
+.sn{background:rgba(168,85,247,.15);color:var(--purple)}
+/* Regression stats */
+.reg-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.rk{background:var(--inp);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.rk-val{font-size:20px;font-weight:700;color:var(--purple);margin-bottom:4px}
+.rk-lbl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+/* Loading */
 .ov{position:fixed;inset:0;background:rgba(8,9,15,.8);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);display:none}
 .ob{text-align:center}
 .sp{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
@@ -69,14 +91,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.cr2{grid-template-columns:1fr}}
-@media(max-width:600px){.controls,.content,.topbar{padding-left:12px;padding-right:12px}.kpi-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.cr2,.cr2e{grid-template-columns:1fr}.prod-grid{grid-template-columns:1fr 1fr}.reg-kpis{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 
-<div class="ov" id="ov"><div class="ob"><div class="sp"></div><p>Loading energy data...</p></div></div>
+<div class="ov" id="ov"><div class="ob"><div class="sp"></div><p>Loading...</p></div></div>
 
+<!-- TOPBAR -->
 <div class="topbar">
   <div style="display:flex;align-items:center">
     <span class="brand-name">Dirisdigiware</span>
@@ -90,6 +112,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
+<!-- CONTROLS -->
 <div class="controls">
   <div style="display:flex;align-items:center;gap:6px">
     <span class="ctrl-lbl">From</span>
@@ -153,7 +176,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Registered Breakers / Circuits</div>
       <div id="breakerTags" style="display:flex;flex-wrap:wrap;gap:6px"><span style="font-size:11px;color:var(--muted)">Loading...</span></div>
     </div>
-    <div style="margin-top:10px;font-size:11px;color:var(--muted)">Need more units? Contact <strong style="color:var(--gold-d)">Venora Lanka Power Panels (Pvt) Ltd</strong> to upgrade your plan.</div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted)">Need more units? Contact <strong style="color:var(--gold-d)">Venora Lanka Power Panels (Pvt) Ltd</strong> to upgrade.</div>
   </div>
 
   <!-- KPI CARDS -->
@@ -168,10 +191,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="kc o"><div class="kdot o"></div><div class="klbl">Off-Peak Savings</div><div class="kval" id="k-save">—</div><div class="ksub">vs all-peak rate</div></div>
   </div>
 
-  <!-- ROW 1: GROUPED COST + USAGE PIE -->
+  <!-- ENERGY CHARTS -->
   <div class="cr cr2">
     <div class="cc">
-      <div class="ch"><div><div class="ct">Cost by Time Period (LKR)</div><div class="cs">Peak · Day · Off-Peak side by side</div></div></div>
+      <div class="ch"><div><div class="ct">Cost by Time Period (LKR)</div><div class="cs">Peak · Day · Off-Peak grouped</div></div></div>
       <div class="cw" style="height:220px"><canvas id="costChart"></canvas></div>
       <div class="leg">
         <div class="li"><div class="ld" style="background:var(--peak)"></div>Peak (17:00–22:00)</div>
@@ -185,10 +208,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
   </div>
 
-  <!-- ROW 2: GROUPED USAGE + USAGE PIE -->
   <div class="cr cr2">
     <div class="cc">
-      <div class="ch"><div><div class="ct">Usage by Time Period (kWh)</div><div class="cs">Peak · Day · Off-Peak side by side</div></div></div>
+      <div class="ch"><div><div class="ct">Usage by Time Period (kWh)</div><div class="cs">Peak · Day · Off-Peak grouped</div></div></div>
       <div class="cw" style="height:220px"><canvas id="usageChart"></canvas></div>
       <div class="leg">
         <div class="li"><div class="ld" style="background:var(--peak)"></div>Peak (17:00–22:00)</div>
@@ -202,12 +224,93 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
   </div>
 
-  <!-- ROW 3: kVA DEMAND -->
   <div class="cr cr1">
     <div class="cc">
-      <div class="ch"><div><div class="ct">Maximum Demand (kVA)</div><div class="cs">Peak demand per period — Contract limit: <span id="climit">63</span> kVA</div></div></div>
+      <div class="ch"><div><div class="ct">Maximum Demand (kVA)</div><div class="cs">Peak demand per period — Contract: <span id="climit">63</span> kVA</div></div></div>
       <div class="cw" style="height:160px"><canvas id="kvaChart"></canvas></div>
     </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- PRODUCTION & REGRESSION SECTION                                    -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+
+  <div class="section-divider">
+    <div class="icon">🏭</div>
+    <div>
+      <div class="title">Production & Regression Analysis</div>
+      <div class="sub">Enter production data per shift · Analyse relationship between output, energy and cost</div>
+    </div>
+    <button class="btn-sm" onclick="loadRegression()" style="margin-left:auto;flex-shrink:0">↻ Run Analysis</button>
+  </div>
+
+  <!-- PRODUCTION DATA ENTRY -->
+  <div class="cc" style="margin-bottom:12px">
+    <div class="ch"><div><div class="ct">Enter Production Data</div><div class="cs">Add units produced per shift to enable regression analysis</div></div></div>
+
+    <div class="prod-grid">
+      <div class="fg"><label>Date</label><input type="date" id="prodDate"></div>
+      <div class="fg">
+        <label>Shift</label>
+        <select id="prodShift">
+          <option value="morning">🌅 Morning (06:00–14:00)</option>
+          <option value="evening">🌇 Evening (14:00–22:00)</option>
+          <option value="night">🌙 Night (22:00–06:00)</option>
+        </select>
+      </div>
+      <div class="fg"><label>Units Produced</label><input type="number" id="prodUnits" placeholder="e.g. 1250" min="0" step="1"></div>
+      <div class="fg"><label>Unit Type</label><input type="text" id="prodUnitType" placeholder="pieces / tons / kg" value="pieces"></div>
+      <div class="fg"><label>Notes (optional)</label><input type="text" id="prodNotes" placeholder="e.g. Machine B offline"></div>
+      <button class="btn-add" onclick="addProduction()">+ Add</button>
+    </div>
+
+    <div id="prodMsg" style="font-size:12px;margin-bottom:10px;display:none"></div>
+
+    <div style="border-top:1px solid var(--border);padding-top:12px">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Production Entries for Selected Period</div>
+      <div id="prodTableContainer"><div style="font-size:12px;color:var(--muted)">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- REGRESSION CHARTS SIDE BY SIDE -->
+  <div class="cr cr2e">
+
+    <!-- ENERGY vs PRODUCTION -->
+    <div class="cc">
+      <div class="ch">
+        <div>
+          <div class="ct" style="color:var(--op)">⚡ Energy vs Production</div>
+          <div class="cs">kWh consumed per shift vs units produced</div>
+        </div>
+        <div id="energyRegBadge" style="font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(76,175,125,.12);color:var(--op);border:1px solid rgba(76,175,125,.25)">—</div>
+      </div>
+      <div class="reg-kpis" id="energyRegStats" style="display:none">
+        <div class="rk"><div class="rk-val" id="er-r2" style="color:var(--op)">—</div><div class="rk-lbl">R² Correlation</div></div>
+        <div class="rk"><div class="rk-val" id="er-intensity" style="color:var(--op)">—</div><div class="rk-lbl">kWh / Unit (avg)</div></div>
+        <div class="rk"><div class="rk-val" id="er-baseline" style="color:var(--op)">—</div><div class="rk-lbl">Baseline kWh</div></div>
+      </div>
+      <div class="cw" style="height:260px"><canvas id="energyRegChart"></canvas></div>
+      <div id="energyRegEq" style="margin-top:10px;padding:10px;background:var(--inp);border-radius:8px;border-left:3px solid var(--op);font-size:11px;color:var(--sub);display:none"></div>
+    </div>
+
+    <!-- COST vs PRODUCTION -->
+    <div class="cc">
+      <div class="ch">
+        <div>
+          <div class="ct" style="color:var(--purple)">💰 Cost (LKR) vs Production</div>
+          <div class="cs">LKR cost per shift vs units produced</div>
+        </div>
+        <div id="costRegBadge" style="font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(168,85,247,.12);color:var(--purple);border:1px solid rgba(168,85,247,.25)">—</div>
+      </div>
+      <div class="reg-kpis" id="costRegStats" style="display:none">
+        <div class="rk"><div class="rk-val" id="cr-r2" style="color:var(--purple)">—</div><div class="rk-lbl">R² Correlation</div></div>
+        <div class="rk"><div class="rk-val" id="cr-intensity" style="color:var(--purple)">—</div><div class="rk-lbl">LKR / Unit (avg)</div></div>
+        <div class="rk"><div class="rk-val" id="cr-baseline" style="color:var(--purple)">—</div><div class="rk-lbl">Baseline LKR</div></div>
+      </div>
+      <div class="cw" style="height:260px"><canvas id="costRegChart"></canvas></div>
+      <div id="costRegEq" style="margin-top:10px;padding:10px;background:var(--inp);border-radius:8px;border-left:3px solid var(--purple);font-size:11px;color:var(--sub);display:none"></div>
+    </div>
+
   </div>
 
 </div>
@@ -216,8 +319,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   Dirisdigiware Energy Intelligence Platform &nbsp;·&nbsp;
   Developed by <strong>Thirasha Bandara</strong> &nbsp;·&nbsp;
   Venora Lanka Power Panels (Pvt) Ltd &nbsp;·&nbsp;
-  &copy; 2026 All Rights Reserved &nbsp;·&nbsp;
-  Unauthorised copying or distribution is prohibited
+  &copy; 2026 All Rights Reserved
 </div>
 
 <script>
@@ -227,33 +329,31 @@ let user = null, charts = {}, view = 'daily';
 
 function checkAuth() {
   const s = sessionStorage.getItem('user');
-  if (!s) { window.location.href = 'login.html'; return false; }
+  if (!s) { window.location.href='login.html'; return false; }
   user = JSON.parse(s);
-  document.getElementById('userBadge').textContent    = user.name || user.username;
-  document.getElementById('companyBadge').textContent = user.company || user.site_name || 'Site ' + user.site_id;
+  document.getElementById('userBadge').textContent    = user.name||user.username;
+  document.getElementById('companyBadge').textContent = user.company||user.site_name||'Site '+user.site_id;
   return true;
 }
-function logout() { sessionStorage.removeItem('user'); window.location.href = 'login.html'; }
-
+function logout() { sessionStorage.removeItem('user'); window.location.href='login.html'; }
 function fd(d) { return d.toISOString().split('T')[0]; }
 
 function updatePeriodLabel() {
-  const from = document.getElementById('fromDate').value;
-  const to   = document.getElementById('toDate').value;
-  if (!from) return;
-  const f = new Date(from); const t = new Date(to);
-  let label = '';
-  if (view === 'monthly')     label = f.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
-  else if (view === 'weekly') label = f.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' – '+t.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-  else                        label = f.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' – '+t.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-  document.getElementById('periodLbl').textContent  = label;
-  document.getElementById('k-period').textContent   = label;
+  const from=document.getElementById('fromDate').value;
+  const to=document.getElementById('toDate').value;
+  if(!from)return;
+  const f=new Date(from),t=new Date(to);
+  const label=view==='monthly'
+    ?f.toLocaleDateString('en-GB',{month:'long',year:'numeric'})
+    :f.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' – '+t.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('periodLbl').textContent=label;
+  document.getElementById('k-period').textContent=label;
 }
 
-function setPreset(p, el) {
+function setPreset(p,el){
   document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  const n=new Date(); let from,to=fd(n);
+  const n=new Date();let from,to=fd(n);
   if(p==='today'){from=to;}
   else if(p==='week'){const d=new Date(n);d.setDate(d.getDate()-d.getDay());from=fd(d);}
   else if(p==='month'){from=fd(new Date(n.getFullYear(),n.getMonth(),1));}
@@ -261,27 +361,23 @@ function setPreset(p, el) {
   else if(p==='last3m'){const d=new Date(n);d.setMonth(d.getMonth()-3);from=fd(d);}
   document.getElementById('fromDate').value=from;
   document.getElementById('toDate').value=to;
-  updatePeriodLabel(); loadData();
+  updatePeriodLabel();loadData();
 }
-
-function setView(v, el) {
-  view=v;
-  document.querySelectorAll('.vb').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  updatePeriodLabel(); loadData();
+function setView(v,el){
+  view=v;document.querySelectorAll('.vb').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');updatePeriodLabel();loadData();
 }
-
-function navigate(direction) {
+function navigate(direction){
   const from=new Date(document.getElementById('fromDate').value);
   const to=new Date(document.getElementById('toDate').value);
   if(view==='hourly'||view==='daily'){from.setDate(from.getDate()+direction);to.setDate(to.getDate()+direction);}
   else if(view==='weekly'){from.setDate(from.getDate()+direction*7);to.setDate(to.getDate()+direction*7);}
   else if(view==='monthly'){from.setMonth(from.getMonth()+direction);to.setMonth(to.getMonth()+direction);}
-  const today=new Date(); if(to>today) to.setTime(today.getTime());
+  const today=new Date();if(to>today)to.setTime(today.getTime());
   document.getElementById('fromDate').value=fd(from);
   document.getElementById('toDate').value=fd(to);
   document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));
-  updatePeriodLabel(); loadData();
+  updatePeriodLabel();loadData();
 }
 
 function fN(n,d=1){
@@ -292,12 +388,11 @@ function fN(n,d=1){
   return n.toFixed(d);
 }
 function fL(n){return'LKR '+fN(n,0);}
-
 function fP(p,v){
   const d=new Date(p);
-  if(v==='hourly') return d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-  if(v==='daily')  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
-  if(v==='weekly') return 'W/E '+d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  if(v==='hourly')return d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  if(v==='daily')return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  if(v==='weekly')return 'W/E '+d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
   if(v==='monthly')return d.toLocaleDateString('en-GB',{month:'short',year:'numeric'});
   return p;
 }
@@ -308,55 +403,29 @@ const TD={
   scales:{x:{grid:{color:'rgba(30,40,64,.5)'},ticks:{color:'#6B7191',font:{size:10},maxTicksLimit:10}},y:{grid:{color:'rgba(30,40,64,.5)'},ticks:{color:'#6B7191',font:{size:10}}}}
 };
 
-// Grouped bar chart (NOT stacked — bars side by side)
-function mkGroupedBar(id, labels, datasets, yf) {
+function mkGroupedBar(id,labels,datasets,yf){
   if(charts[id])charts[id].destroy();
   const ctx=document.getElementById(id).getContext('2d');
-  charts[id]=new Chart(ctx,{
-    type:'bar',
-    data:{labels,datasets},
-    options:{
-      ...TD,
-      plugins:{
-        ...TD.plugins,
-        legend:{
-          display:true,
-          position:'top',
-          labels:{color:'#9499B5',font:{size:11},padding:16,boxWidth:10,usePointStyle:true}
-        },
-        tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+c.dataset.label+': '+(yf?yf(c.raw):fN(c.raw))}}
-      },
-      scales:{
-        x:{...TD.scales.x,stacked:false},
-        y:{...TD.scales.y,stacked:false,ticks:{...TD.scales.y.ticks,callback:v=>yf?yf(v):fN(v)}}
-      }
-    }
-  });
+  charts[id]=new Chart(ctx,{type:'bar',data:{labels,datasets},options:{...TD,
+    plugins:{...TD.plugins,legend:{display:true,position:'top',labels:{color:'#9499B5',font:{size:11},padding:16,boxWidth:10,usePointStyle:true}},
+      tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+c.dataset.label+': '+(yf?yf(c.raw):fN(c.raw))}}},
+    scales:{x:{...TD.scales.x,stacked:false},y:{...TD.scales.y,stacked:false,ticks:{...TD.scales.y.ticks,callback:v=>yf?yf(v):fN(v)}}}}});
 }
-
 function mkPie(id,labels,data,colors){
   if(charts[id])charts[id].destroy();
   const ctx=document.getElementById(id).getContext('2d');
-  charts[id]=new Chart(ctx,{
-    type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#10141F',borderWidth:3}]},
+  charts[id]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#10141F',borderWidth:3}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
       plugins:{legend:{position:'bottom',labels:{color:'#9499B5',font:{size:11},padding:10,boxWidth:10}},
         tooltip:{backgroundColor:'#10141F',borderColor:'#1E2840',borderWidth:1,titleColor:'#C9A347',bodyColor:'#F0EDE6',
-          callbacks:{label:c=>' '+fN(c.raw,1)+' ('+((c.raw/c.dataset.data.reduce((a,b)=>a+b,0))*100).toFixed(1)+'%)'}}}
-    }
-  });
+          callbacks:{label:c=>' '+fN(c.raw,1)+' ('+((c.raw/c.dataset.data.reduce((a,b)=>a+b,0))*100).toFixed(1)+'%)'}}}}}); 
 }
-
 function mkLine(id,labels,datasets){
   if(charts[id])charts[id].destroy();
   const ctx=document.getElementById(id).getContext('2d');
-  charts[id]=new Chart(ctx,{
-    type:'line',data:{labels,datasets},
-    options:{...TD,
-      plugins:{...TD.plugins,tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+fN(c.raw,2)+' kVA'}}},
-      scales:{...TD.scales,y:{...TD.scales.y,ticks:{...TD.scales.y.ticks,callback:v=>fN(v,1)}}}
-    }
-  });
+  charts[id]=new Chart(ctx,{type:'line',data:{labels,datasets},
+    options:{...TD,plugins:{...TD.plugins,tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+fN(c.raw,2)+' kVA'}}},
+      scales:{...TD.scales,y:{...TD.scales.y,ticks:{...TD.scales.y.ticks,callback:v=>fN(v,1)}}}}});
 }
 
 function updateUnitPanel(d){
@@ -388,29 +457,21 @@ function updateKPIs(k){
   document.getElementById('k-save').textContent=fL(k.offpeak_savings);
 }
 
-function updateCharts(ts, tou){
+function updateCharts(ts,tou){
   if(!ts||!ts.length)return;
   const labels=ts.map(r=>fP(r.period,view));
   const col=['#E05A5A','#C9A347','#4CAF7D'];
-
-  // GROUPED cost chart — 3 bars side by side
   mkGroupedBar('costChart',labels,[
     {label:'Peak',    data:ts.map(r=>r.peak_cost),   backgroundColor:'rgba(224,90,90,.8)',borderRadius:3},
     {label:'Day',     data:ts.map(r=>r.day_cost),    backgroundColor:'rgba(201,163,71,.8)',borderRadius:3},
     {label:'Off-Peak',data:ts.map(r=>r.offpeak_cost),backgroundColor:'rgba(76,175,125,.8)',borderRadius:3},
   ],v=>'LKR '+fN(v,0));
-
-  // GROUPED usage chart — 3 bars side by side
   mkGroupedBar('usageChart',labels,[
     {label:'Peak',    data:ts.map(r=>r.peak_kwh),   backgroundColor:'rgba(224,90,90,.8)',borderRadius:3},
     {label:'Day',     data:ts.map(r=>r.day_kwh),    backgroundColor:'rgba(201,163,71,.8)',borderRadius:3},
     {label:'Off-Peak',data:ts.map(r=>r.offpeak_kwh),backgroundColor:'rgba(76,175,125,.8)',borderRadius:3},
   ],v=>fN(v,1)+' kWh');
-
-  // kVA line
   mkLine('kvaChart',labels,[{label:'Max kVA',data:ts.map(r=>r.max_kva),borderColor:'#5A9EE0',backgroundColor:'rgba(90,158,224,.1)',borderWidth:2,pointRadius:2,fill:true,tension:.3}]);
-
-  // Pie charts
   if(tou&&tou.length){
     const tlbl=tou.map(t=>t.period+' ('+t.hours+')');
     mkPie('costPie', tlbl,tou.map(t=>t.cost),col);
@@ -418,6 +479,133 @@ function updateCharts(ts, tou){
   }
 }
 
+// ── PRODUCTION ────────────────────────────────────────────────────────────────
+async function addProduction(){
+  const date=document.getElementById('prodDate').value;
+  const shift=document.getElementById('prodShift').value;
+  const units=document.getElementById('prodUnits').value;
+  const unitType=document.getElementById('prodUnitType').value||'pieces';
+  const notes=document.getElementById('prodNotes').value;
+  const msg=document.getElementById('prodMsg');
+  if(!date||!units){msg.textContent='Please enter date and units produced.';msg.style.color='#E05A5A';msg.style.display='block';return;}
+  try{
+    const resp=await fetch(`${API_URL}/api/production/add`,{
+      method:'POST',headers:{'Content-Type':'application/json','x-api-key':API_KEY},
+      body:JSON.stringify({site_id:user.site_id,production_date:date,shift,units_produced:parseFloat(units),unit_type:unitType,notes})
+    });
+    const data=await resp.json();
+    if(data.success){
+      msg.textContent='✓ Saved: '+date+' ('+shift+' shift) — '+parseFloat(units).toLocaleString()+' '+unitType;
+      msg.style.color='#4CAF7D';msg.style.display='block';
+      document.getElementById('prodUnits').value='';
+      document.getElementById('prodNotes').value='';
+      loadProductionList();
+    }else{msg.textContent=data.error||'Failed.';msg.style.color='#E05A5A';msg.style.display='block';}
+  }catch(e){msg.textContent='Error: '+e.message;msg.style.color='#E05A5A';msg.style.display='block';}
+}
+
+async function loadProductionList(){
+  const from=document.getElementById('fromDate').value;
+  const to=document.getElementById('toDate').value;
+  try{
+    const resp=await fetch(`${API_URL}/api/production/list?site_id=${user.site_id}&from=${from}&to=${to}`,{headers:{'x-api-key':API_KEY}});
+    const data=await resp.json();
+    const c=document.getElementById('prodTableContainer');
+    if(!data.length){c.innerHTML='<div style="font-size:12px;color:var(--muted)">No entries for this period. Add production data above.</div>';return;}
+    c.innerHTML=`<table class="prod-table">
+      <thead><tr><th>Date</th><th>Shift</th><th>Units</th><th>Type</th><th>Notes</th></tr></thead>
+      <tbody>${data.map(r=>`<tr>
+        <td>${new Date(r.production_date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</td>
+        <td><span class="shift-badge ${r.shift==='morning'?'sm':r.shift==='evening'?'se':'sn'}">${r.shift}</span></td>
+        <td style="font-weight:600;color:var(--gold)">${parseFloat(r.units_produced).toLocaleString()}</td>
+        <td style="color:var(--muted)">${r.unit_type}</td>
+        <td style="color:var(--muted)">${r.notes||'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }catch(e){console.error(e);}
+}
+
+// Draw scatter + regression line
+function drawRegChart(canvasId, points, reg, xKey, yKey, yLabel, lineColor, dotColor){
+  if(charts[canvasId])charts[canvasId].destroy();
+  if(!points.length)return;
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  const sc={morning:'rgba(201,163,71,.85)',evening:'rgba(90,158,224,.85)',night:'rgba(168,85,247,.85)'};
+  const datasets=[{
+    label:'Shift data',type:'scatter',
+    data:points.map(p=>({x:p.units,y:p[yKey],date:p.date,shift:p.shift})),
+    backgroundColor:points.map(p=>sc[p.shift]||dotColor),
+    pointRadius:7,pointHoverRadius:9
+  }];
+  if(reg){
+    datasets.push({
+      label:'Regression line',type:'line',
+      data:reg.regression_line,
+      borderColor:lineColor,backgroundColor:'transparent',
+      borderWidth:2,borderDash:[6,3],pointRadius:0,tension:0
+    });
+  }
+  const unitType=points[0]?.unit_type||'units';
+  charts[canvasId]=new Chart(ctx,{
+    type:'scatter',data:{datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,position:'top',labels:{color:'#9499B5',font:{size:10},padding:12,boxWidth:8}},
+        tooltip:{backgroundColor:'#10141F',borderColor:'#1E2840',borderWidth:1,titleColor:lineColor,bodyColor:'#F0EDE6',
+          callbacks:{
+            title:items=>{const p=points[items[0].dataIndex];return p?`${p.date} — ${p.shift} shift`:'';}  ,
+            label:item=>[` Production: ${item.raw.x.toLocaleString()} ${unitType}`,` ${yLabel}: ${fN(item.raw.y,1)}${yLabel==='kWh'?' kWh':' LKR'}`]
+          }}
+      },
+      scales:{
+        x:{grid:{color:'rgba(30,40,64,.5)'},ticks:{color:'#6B7191',font:{size:10}},title:{display:true,text:`Production (${unitType})`,color:'#9499B5',font:{size:10}}},
+        y:{grid:{color:'rgba(30,40,64,.5)'},ticks:{color:'#6B7191',font:{size:10},callback:v=>fN(v,1)+(yLabel==='kWh'?' kWh':' LKR')},title:{display:true,text:yLabel==='kWh'?'Energy (kWh)':'Cost (LKR)',color:'#9499B5',font:{size:10}}}
+      }
+    }
+  });
+}
+
+async function loadRegression(){
+  const from=document.getElementById('fromDate').value;
+  const to=document.getElementById('toDate').value;
+  try{
+    const resp=await fetch(`${API_URL}/api/production/regression?site_id=${user.site_id}&from=${from}&to=${to}`,{headers:{'x-api-key':API_KEY}});
+    const data=await resp.json();
+
+    // Energy regression
+    const eb=document.getElementById('energyRegBadge');
+    const er=data.energy_regression;
+    if(er){
+      eb.textContent=er.interpretation+' (R²='+er.r2_percent+'%)';
+      document.getElementById('er-r2').textContent=(er.r2*100).toFixed(1)+'%';
+      document.getElementById('er-intensity').textContent=er.avg_per_unit+' kWh';
+      document.getElementById('er-baseline').textContent=fN(er.baseline,1)+' kWh';
+      document.getElementById('energyRegStats').style.display='grid';
+      document.getElementById('energyRegEq').innerHTML=`<strong>Equation:</strong> Energy = ${er.variable_per_unit} × Units + ${fN(er.baseline,1)} kWh &nbsp;·&nbsp; <strong>R²:</strong> ${er.r2_percent}% (${er.interpretation})`;
+      document.getElementById('energyRegEq').style.display='block';
+    }else{eb.textContent=data.message||'No data';document.getElementById('energyRegStats').style.display='none';document.getElementById('energyRegEq').style.display='none';}
+
+    // Cost regression
+    const cb=document.getElementById('costRegBadge');
+    const cr=data.cost_regression;
+    if(cr){
+      cb.textContent=cr.interpretation+' (R²='+cr.r2_percent+'%)';
+      document.getElementById('cr-r2').textContent=(cr.r2*100).toFixed(1)+'%';
+      document.getElementById('cr-intensity').textContent='LKR '+fN(cr.avg_per_unit,0);
+      document.getElementById('cr-baseline').textContent='LKR '+fN(cr.baseline,0);
+      document.getElementById('costRegStats').style.display='grid';
+      document.getElementById('costRegEq').innerHTML=`<strong>Equation:</strong> Cost = LKR ${fN(cr.variable_per_unit,2)} × Units + LKR ${fN(cr.baseline,0)} &nbsp;·&nbsp; <strong>R²:</strong> ${cr.r2_percent}% (${cr.interpretation})`;
+      document.getElementById('costRegEq').style.display='block';
+    }else{cb.textContent=data.message||'No data';document.getElementById('costRegStats').style.display='none';document.getElementById('costRegEq').style.display='none';}
+
+    drawRegChart('energyRegChart',data.points||[],er,'units','energy_kwh','kWh','#4CAF7D','rgba(76,175,125,.8)');
+    drawRegChart('costRegChart',  data.points||[],cr,'units','cost_lkr',  'LKR','#A855F7','rgba(168,85,247,.8)');
+
+  }catch(e){console.error(e);}
+}
+
+// ── MAIN LOAD ─────────────────────────────────────────────────────────────────
 async function loadData(){
   if(!checkAuth())return;
   const from=document.getElementById('fromDate').value;
@@ -436,6 +624,8 @@ async function loadData(){
     updateKPIs(data.kpis);
     updateCharts(data.time_series,data.tou_breakdown);
     if(data.tariff&&data.tariff.contract_demand_kva)document.getElementById('climit').textContent=data.tariff.contract_demand_kva;
+    loadProductionList();
+    loadRegression();
   }catch(err){console.error(err);alert('Error: '+err.message);}
   finally{document.getElementById('ov').style.display='none';}
 }
@@ -444,6 +634,7 @@ if(checkAuth()){
   const n=new Date();
   document.getElementById('fromDate').value=fd(new Date(n.getFullYear(),n.getMonth(),1));
   document.getElementById('toDate').value=fd(n);
+  document.getElementById('prodDate').value=fd(n);
   updatePeriodLabel();
   loadData();
 }
