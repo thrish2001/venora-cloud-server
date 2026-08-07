@@ -16,23 +16,26 @@
   --peak:#E05A5A;--op:#4CAF7D;--blue:#5A9EE0;--purple:#A855F7;
 }
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+
+/* SIDEBAR */
 .sidebar{width:220px;min-height:100vh;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
 .sb-logo{padding:24px 20px 18px;border-bottom:1px solid var(--border)}
 .sb-brand{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);letter-spacing:1px}
 .sb-tag{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
 .sb-nav{flex:1;padding:16px 10px}
 .nav-sec{font-size:9px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;padding:0 10px;margin:16px 0 6px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted);transition:all .2s;text-decoration:none;margin-bottom:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:12px;font-weight:500;color:var(--muted);transition:all .2s;text-decoration:none;margin-bottom:2px}
 .nav-item:hover{background:var(--inp);color:var(--text)}
 .nav-item.active{background:linear-gradient(135deg,rgba(168,85,247,.12),rgba(168,85,247,.06));color:var(--purple);border:1px solid rgba(168,85,247,.2)}
 .nav-icon{width:18px;text-align:center;font-size:14px}
 .sb-footer{padding:14px;border-top:1px solid var(--border)}
 .user-card{background:var(--inp);border-radius:10px;padding:10px 12px;margin-bottom:8px}
-.u-name{font-size:12px;font-weight:600}
-.u-role{font-size:10px;color:var(--muted);margin-top:2px}
+.u-name{font-size:12px;font-weight:600}.u-role{font-size:10px;color:var(--muted);margin-top:2px}
 .u-co{font-size:10px;color:var(--gold);background:rgba(201,163,71,.1);border:1px solid rgba(201,163,71,.2);border-radius:6px;padding:2px 8px;margin-top:5px;display:inline-block}
 .btn-out{width:100%;background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px;font-family:'Inter',sans-serif;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s}
 .btn-out:hover{border-color:var(--peak);color:var(--peak)}
+
+/* MAIN */
 .main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
 .topbar{background:rgba(13,18,32,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;height:58px;position:sticky;top:0;z-index:50;flex-shrink:0}
 .pg-title{font-size:15px;font-weight:700}
@@ -44,18 +47,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .pb{background:var(--inp);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:'Inter',sans-serif}
 .pb:hover,.pb.active{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.4);color:var(--purple)}
 .sep{width:1px;height:22px;background:var(--border);margin:0 2px}
-.btn-run{background:linear-gradient(135deg,#7C3AED,var(--purple));border:none;border-radius:8px;padding:7px 18px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:#fff;cursor:pointer;margin-left:auto;transition:opacity .15s}
+.btn-run{background:linear-gradient(135deg,#7C3AED,var(--purple));border:none;border-radius:8px;padding:7px 18px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:#fff;cursor:pointer;margin-left:auto}
 .btn-run:hover{opacity:.85}
 .content{flex:1;padding:22px 28px;overflow-y:auto}
+
+/* CARDS */
 .cc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
-.cc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(168,85,247,.35),transparent)}
+.cc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(168,85,247,.3),transparent)}
 .ct{font-size:13px;font-weight:700}
 .cs{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* FORM */
 .prod-grid{display:grid;grid-template-columns:repeat(5,1fr) auto;gap:10px;align-items:end;margin:14px 0}
 .fg label{display:block;font-size:9px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
 .fg input,.fg select{background:var(--inp);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:'Inter',sans-serif;font-size:12px;color:var(--text);outline:none;transition:border-color .15s;width:100%}
 .fg input:focus,.fg select:focus{border-color:var(--purple)}
 .btn-add{background:linear-gradient(135deg,#7C3AED,var(--purple));border:none;border-radius:8px;padding:9px 18px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;color:#fff;cursor:pointer;height:37px;white-space:nowrap}
+
+/* TABLE */
 .prod-table{width:100%;border-collapse:collapse;margin-top:10px}
 .prod-table th{font-size:9px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;text-align:left;padding:0 12px 10px;border-bottom:1px solid var(--border)}
 .prod-table td{padding:10px 12px;font-size:12px;border-bottom:1px solid rgba(28,42,66,.5)}
@@ -66,56 +75,58 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .se{background:rgba(90,158,224,.15);color:var(--blue)}
 .sn{background:rgba(168,85,247,.15);color:var(--purple)}
 
-/* REGRESSION CARD */
-.reg-card{background:linear-gradient(145deg,#080D1C,#0D1220);border:1px solid rgba(168,85,247,.2);border-radius:16px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(168,85,247,.05),0 0 30px rgba(76,175,125,.04)}
-.reg-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(76,175,125,.4),rgba(168,85,247,.4),transparent)}
-.glow-tl{position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(76,175,125,.06);filter:blur(50px);top:-60px;left:-40px;pointer-events:none}
-.glow-tr{position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(168,85,247,.06);filter:blur(50px);top:-60px;right:-40px;pointer-events:none}
+/* ANALYSIS CARD */
+.analysis-card{background:linear-gradient(160deg,#070D1A,#0A0F1E);border:1px solid rgba(168,85,247,.18);border-radius:18px;padding:26px;margin-bottom:16px;position:relative;overflow:hidden}
+.analysis-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,rgba(76,175,125,.4),rgba(168,85,247,.4),rgba(76,175,125,.1))}
+.glow-l{position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(76,175,125,.04);filter:blur(60px);top:-80px;left:-60px;pointer-events:none}
+.glow-r{position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(168,85,247,.04);filter:blur(60px);top:-80px;right:-60px;pointer-events:none}
+
+/* LEGEND ROW */
+.leg-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:14px 0}
+.leg-i{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--sub)}
+.leg-line{width:22px;height:3px;border-radius:2px}
+.leg-dot{width:11px;height:11px;border-radius:50%;border:2px solid rgba(255,255,255,.2)}
+.leg-dot-ring{width:11px;height:11px;border-radius:50%;border:2px solid;background:transparent}
 
 /* STAT ROW */
-.stat-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:18px 0}
-.sp{border-radius:10px;padding:12px 10px;text-align:center}
-.sp.en{background:rgba(76,175,125,.08);border:1px solid rgba(76,175,125,.2)}
-.sp.co{background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2)}
-.sp-val{font-size:15px;font-weight:800;line-height:1;margin-bottom:4px}
-.sp.en .sp-val{color:var(--op)}
-.sp.co .sp-val{color:var(--purple)}
-.sp-lbl{font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr) 1fr 1fr;gap:10px;margin:16px 0}
+.stat-box{border-radius:10px;padding:12px 14px;text-align:center}
+.sb-energy{background:rgba(90,158,224,.07);border:1px solid rgba(90,158,224,.2)}
+.sb-reg{background:rgba(201,163,71,.07);border:1px solid rgba(201,163,71,.2)}
+.sb-loss{background:rgba(224,90,90,.07);border:1px solid rgba(224,90,90,.2)}
+.sb-eff{background:rgba(76,175,125,.07);border:1px solid rgba(76,175,125,.2)}
+.sb-cost{background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.2)}
+.stat-val{font-size:15px;font-weight:800;margin-bottom:4px;line-height:1}
+.stat-lbl{font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase}
 
-/* LEGEND */
-.chart-legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px}
-.leg-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--sub)}
-.leg-line{width:24px;height:3px;border-radius:2px}
-.leg-dot{width:10px;height:10px;border-radius:50%}
-
-/* EQ BOXES */
-.eq-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-.eq-box{padding:12px 16px;border-radius:10px;font-size:11px;color:var(--sub);line-height:1.7}
-.eq-en{background:rgba(76,175,125,.06);border:1px solid rgba(76,175,125,.15);border-left:3px solid var(--op)}
-.eq-co{background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);border-left:3px solid var(--purple)}
+/* INSIGHT PANELS */
+.insight-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.insight-box{border-radius:10px;padding:14px 16px}
+.loss-box{background:rgba(224,90,90,.07);border:1px solid rgba(224,90,90,.2)}
+.eff-box{background:rgba(76,175,125,.07);border:1px solid rgba(76,175,125,.2)}
+.insight-title{font-size:11px;font-weight:700;margin-bottom:8px}
+.insight-item{font-size:10px;color:var(--sub);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;justify-content:space-between}
+.insight-item:last-child{border-bottom:none}
 
 /* SUMMARY */
-.summary-box{background:linear-gradient(135deg,rgba(168,85,247,.05),rgba(76,175,125,.04));border:1px solid rgba(168,85,247,.15);border-radius:14px;padding:22px;margin-bottom:16px}
+.summary-box{background:linear-gradient(135deg,rgba(168,85,247,.05),rgba(76,175,125,.04));border:1px solid rgba(168,85,247,.15);border-radius:14px;padding:20px;margin-bottom:16px}
 
 /* LOADING */
 .ov{position:fixed;inset:0;background:rgba(7,10,19,.9);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(8px);display:none}
 .ob{text-align:center}
-.sp-load{width:44px;height:44px;border:3px solid var(--border2);border-top-color:var(--purple);border-right-color:var(--op);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+.sp-load{width:46px;height:46px;border:3px solid var(--border2);border-top-color:var(--op);border-right-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.ob p{font-size:13px;color:var(--sub);margin-top:4px}
+.ob p{font-size:13px;color:var(--sub)}
 .footer{text-align:center;padding:14px;font-size:10px;color:#2A3050;border-top:1px solid var(--border);flex-shrink:0}
 .footer strong{color:#5A6080}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.stat-row{grid-template-columns:repeat(3,1fr)}.eq-row{grid-template-columns:1fr}.prod-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.stat-grid{grid-template-columns:1fr 1fr}.insight-row{grid-template-columns:1fr}.prod-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 
 <div class="ov" id="ov">
-  <div class="ob">
-    <div class="sp-load"></div>
-    <p>Running regression analysis...</p>
-  </div>
+  <div class="ob"><div class="sp-load"></div><p>Calculating regression analysis...</p></div>
 </div>
 
 <!-- SIDEBAR -->
@@ -142,12 +153,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
-<!-- MAIN -->
 <div class="main">
   <div class="topbar">
     <div>
-      <div class="pg-title">🏭 Production &amp; Regression Analysis</div>
-      <div class="pg-sub">Analyse how production output drives energy consumption and electricity cost</div>
+      <div class="pg-title">🏭 Production Regression Analysis</div>
+      <div class="pg-sub">Historical energy efficiency — identify loss points and peak performance</div>
     </div>
   </div>
 
@@ -173,7 +183,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
     <!-- PRODUCTION ENTRY -->
     <div class="cc">
-      <div><div class="ct">Enter Production Data</div><div class="cs">Add units produced per shift — regression analysis updates automatically</div></div>
+      <div><div class="ct">Enter Production Data</div><div class="cs">Add units produced per shift to build the regression model</div></div>
       <div class="prod-grid">
         <div class="fg"><label>Date</label><input type="date" id="prodDate"></div>
         <div class="fg"><label>Shift</label>
@@ -188,64 +198,67 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <div class="fg"><label>Notes (optional)</label><input type="text" id="prodNotes" placeholder="e.g. Line A stopped"></div>
         <button class="btn-add" onclick="addProd()">+ Add</button>
       </div>
-      <div id="prodMsg" style="font-size:12px;margin-bottom:10px;display:none"></div>
+      <div id="prodMsg" style="font-size:12px;margin-bottom:8px;display:none"></div>
       <div style="border-top:1px solid var(--border);padding-top:14px">
         <div style="font-size:9px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Production Entries — Selected Period</div>
         <div id="prodTable"><div style="font-size:12px;color:var(--muted)">Loading...</div></div>
       </div>
     </div>
 
-    <!-- REGRESSION CHART CARD -->
-    <div class="reg-card" id="regCard">
-      <div class="glow-tl"></div>
-      <div class="glow-tr"></div>
+    <!-- ANALYSIS CHART -->
+    <div class="analysis-card">
+      <div class="glow-l"></div>
+      <div class="glow-r"></div>
 
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
         <div>
-          <div style="font-size:16px;font-weight:800;background:linear-gradient(135deg,var(--op),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
-            Production vs Energy &amp; Cost — Regression Analysis
+          <div style="font-size:17px;font-weight:800;background:linear-gradient(90deg,var(--blue),var(--op),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+            Energy · Production · Cost — Regression Analysis
           </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:4px">
-            X-axis: Units produced per shift &nbsp;·&nbsp; Y-left: Energy (kWh) &nbsp;·&nbsp; Y-right: Cost (LKR)
+          <div style="font-size:10px;color:var(--muted);margin-top:5px">
+            Past history · Regression baseline · Loss detection · Cost correlation
           </div>
         </div>
-        <div style="display:flex;gap:8px">
-          <div id="eBadge" style="font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(76,175,125,.12);color:var(--op);border:1px solid rgba(76,175,125,.25)">—</div>
-          <div id="cBadge" style="font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(168,85,247,.12);color:var(--purple);border:1px solid rgba(168,85,247,.25)">—</div>
-        </div>
+        <div id="regBadge" style="font-size:10px;font-weight:700;padding:5px 14px;border-radius:20px;background:rgba(201,163,71,.1);color:var(--gold);border:1px solid rgba(201,163,71,.25)">—</div>
       </div>
 
       <!-- STATS -->
-      <div class="stat-row" id="statRow" style="display:none">
-        <div class="sp en"><div class="sp-val" id="e-r2">—</div><div class="sp-lbl">Energy R²</div></div>
-        <div class="sp en"><div class="sp-val" id="e-int">—</div><div class="sp-lbl">kWh / Unit</div></div>
-        <div class="sp en"><div class="sp-val" id="e-base">—</div><div class="sp-lbl">Baseline kWh</div></div>
-        <div class="sp co"><div class="sp-val" id="c-r2">—</div><div class="sp-lbl">Cost R²</div></div>
-        <div class="sp co"><div class="sp-val" id="c-int">—</div><div class="sp-lbl">LKR / Unit</div></div>
-        <div class="sp co"><div class="sp-val" id="c-base">—</div><div class="sp-lbl">Baseline LKR</div></div>
+      <div class="stat-grid" id="statGrid" style="display:none">
+        <div class="stat-box sb-energy"><div class="stat-val" id="s-kwh" style="color:var(--blue)">—</div><div class="stat-lbl">Avg kWh/Shift</div></div>
+        <div class="stat-box sb-reg"><div class="stat-val" id="s-intensity" style="color:var(--gold)">—</div><div class="stat-lbl">kWh / Unit</div></div>
+        <div class="stat-box sb-cost"><div class="stat-val" id="s-cost" style="color:var(--purple)">—</div><div class="stat-lbl">LKR / Unit</div></div>
+        <div class="stat-box sb-loss"><div class="stat-val" id="s-loss" style="color:var(--peak)">—</div><div class="stat-lbl">Loss Shifts</div></div>
+        <div class="stat-box sb-eff"><div class="stat-val" id="s-eff" style="color:var(--op)">—</div><div class="stat-lbl">Efficient Shifts</div></div>
       </div>
 
       <!-- LEGEND -->
-      <div class="chart-legend">
-        <div class="leg-item"><div class="leg-dot" style="background:rgba(201,163,71,.9)"></div>Morning shift</div>
-        <div class="leg-item"><div class="leg-dot" style="background:rgba(90,158,224,.9)"></div>Evening shift</div>
-        <div class="leg-item"><div class="leg-dot" style="background:rgba(168,85,247,.9)"></div>Night shift</div>
-        <div class="leg-item" style="margin-left:auto"><div class="leg-line" style="background:var(--op)"></div>Energy regression</div>
-        <div class="leg-item"><div class="leg-line" style="background:var(--purple)"></div>Cost regression</div>
+      <div class="leg-row">
+        <div class="leg-i"><div style="width:22px;height:4px;background:var(--blue);border-radius:2px"></div>Actual Energy</div>
+        <div class="leg-i"><div style="width:22px;height:3px;background:var(--gold);border-radius:2px;border-top:2px dashed var(--gold);opacity:.8"></div>Expected (Regression)</div>
+        <div class="leg-i"><div style="width:22px;height:3px;background:var(--purple);border-radius:2px"></div>Electricity Cost</div>
+        <div class="leg-i" style="margin-left:6px">
+          <div style="width:12px;height:12px;border-radius:50%;background:rgba(224,90,90,.9);border:2px solid rgba(224,90,90,.3)"></div>
+          ⚠ Loss Point
+        </div>
+        <div class="leg-i">
+          <div style="width:12px;height:12px;border-radius:50%;background:rgba(76,175,125,.9);border:2px solid rgba(76,175,125,.3)"></div>
+          ✓ Efficient Point
+        </div>
+        <div class="leg-i" style="margin-left:4px"><div style="width:16px;height:16px;background:rgba(90,158,224,.12);border:1px solid rgba(90,158,224,.3);border-radius:3px"></div>Production</div>
       </div>
 
       <!-- THE CHART -->
-      <div style="height:380px;position:relative"><canvas id="mainChart"></canvas></div>
+      <div style="height:420px;position:relative"><canvas id="mainChart"></canvas></div>
 
-      <!-- EQUATIONS -->
-      <div class="eq-row" id="eqRow" style="display:none">
-        <div class="eq-box eq-en">
-          <strong style="color:var(--op)">⚡ Energy Equation</strong><br>
-          <span id="eqEnergy">—</span>
+      <!-- INSIGHT PANELS -->
+      <div class="insight-row" id="insightRow" style="display:none">
+        <div class="insight-box loss-box">
+          <div class="insight-title" style="color:var(--peak)">⚠ Loss / Inefficiency Shifts</div>
+          <div id="lossInsights"><div style="font-size:11px;color:var(--muted)">No loss shifts detected</div></div>
         </div>
-        <div class="eq-box eq-co">
-          <strong style="color:var(--purple)">💰 Cost Equation</strong><br>
-          <span id="eqCost">—</span>
+        <div class="insight-box eff-box">
+          <div class="insight-title" style="color:var(--op)">✓ High Efficiency Shifts</div>
+          <div id="effInsights"><div style="font-size:11px;color:var(--muted)">No peak efficiency shifts detected</div></div>
         </div>
       </div>
     </div>
@@ -253,7 +266,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <!-- SUMMARY -->
     <div class="summary-box" id="summaryBox" style="display:none">
       <div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:14px">📋 Analysis Summary</div>
-      <div id="summaryContent" style="font-size:12px;color:var(--sub);line-height:1.9"></div>
+      <div id="summaryContent" style="font-size:12px;color:var(--sub);line-height:2"></div>
     </div>
 
   </div>
@@ -266,11 +279,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <script>
 const API_URL='https://venora-cloud-server-production.up.railway.app';
 const API_KEY='venora-super-secret-key-2025-change-this';
-let user=null,mainChart=null;
+let user=null, mainChart=null, pulseActive=false;
 
 function checkAuth(){
-  const s=sessionStorage.getItem('user');
-  if(!s){window.location.href='login.html';return false;}
+  const s=sessionStorage.getItem('user');if(!s){window.location.href='login.html';return false;}
   user=JSON.parse(s);
   document.getElementById('uName').textContent=user.name||user.username;
   document.getElementById('uRole').textContent=user.role||'Viewer';
@@ -282,13 +294,11 @@ function fd(d){return d.toISOString().split('T')[0];}
 function setP(p,el){
   document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));el.classList.add('active');
   const n=new Date();let from,to=fd(n);
-  if(p==='today'){from=to;}
-  else if(p==='week'){const d=new Date(n);d.setDate(d.getDate()-d.getDay());from=fd(d);}
+  if(p==='today'){from=to;}else if(p==='week'){const d=new Date(n);d.setDate(d.getDate()-d.getDay());from=fd(d);}
   else if(p==='month'){from=fd(new Date(n.getFullYear(),n.getMonth(),1));}
   else if(p==='last30'){const d=new Date(n);d.setDate(d.getDate()-30);from=fd(d);}
   else if(p==='last3m'){const d=new Date(n);d.setMonth(d.getMonth()-3);from=fd(d);}
-  document.getElementById('fromDate').value=from;
-  document.getElementById('toDate').value=to;
+  document.getElementById('fromDate').value=from;document.getElementById('toDate').value=to;
 }
 function fN(n,d=1){
   if(n===null||n===undefined||isNaN(n))return'—';n=parseFloat(n);
@@ -302,11 +312,8 @@ function animateLine(chart,dsIdx,duration,delay){
     if(!meta||!meta.dataset)return;
     const pts=meta.data;if(!pts||pts.length<2)return;
     let len=0;
-    for(let i=1;i<pts.length;i++){
-      const dx=pts[i].x-pts[i-1].x,dy=pts[i].y-pts[i-1].y;
-      len+=Math.sqrt(dx*dx+dy*dy);
-    }
-    len=Math.max(len,600);
+    for(let i=1;i<pts.length;i++){const dx=pts[i].x-pts[i-1].x,dy=pts[i].y-pts[i-1].y;len+=Math.sqrt(dx*dx+dy*dy);}
+    len=Math.max(len,800);
     chart.data.datasets[dsIdx].borderDash=[len,len];
     chart.data.datasets[dsIdx].borderDashOffset=len;
     chart.update('none');
@@ -324,170 +331,324 @@ function animateLine(chart,dsIdx,duration,delay){
   },delay);
 }
 
-// ── BUILD MAIN CHART ──────────────────────────────────────────────────────────
+// ── PULSE ANIMATION FOR LOSS/EFFICIENT POINTS ─────────────────────────────────
+let lossDatasetIdx=-1,effDatasetIdx=-1;
+const pulsePlugin={
+  id:'pulse',
+  afterDraw(chart){
+    if(!pulseActive)return;
+    const now=performance.now();
+    const ctx=chart.ctx;
+    [[lossDatasetIdx,'224,90,90'],[effDatasetIdx,'76,175,125']].forEach(([idx,rgb])=>{
+      if(idx<0)return;
+      const meta=chart.getDatasetMeta(idx);
+      if(!meta)return;
+      meta.data.forEach(pt=>{
+        const phase=(now%1800)/1800;
+        const r=12+phase*22;
+        const a=(1-phase)*0.8;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(pt.x,pt.y,r,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(${rgb},${a})`;
+        ctx.lineWidth=2.5;
+        ctx.stroke();
+        ctx.restore();
+      });
+    });
+  }
+};
+
+function startPulse(chart){
+  pulseActive=true;
+  function loop(){if(!pulseActive)return;chart.draw();requestAnimationFrame(loop);}
+  requestAnimationFrame(loop);
+}
+
+// ── SHADING PLUGIN ────────────────────────────────────────────────────────────
+// Fills area between actual energy line and regression expected line
+const shadingPlugin={
+  id:'shading',
+  afterDatasetsDraw(chart){
+    // Only run when we have actual (ds0) and expected (ds1) lines
+    const actualMeta=chart.getDatasetMeta(1);
+    const expectedMeta=chart.getDatasetMeta(2);
+    if(!actualMeta||!expectedMeta)return;
+    const aPts=actualMeta.data,ePts=expectedMeta.data;
+    if(!aPts.length||!ePts.length)return;
+    const ctx=chart.ctx;
+    const len=Math.min(aPts.length,ePts.length);
+    for(let i=0;i<len-1;i++){
+      const a1=aPts[i],a2=aPts[i+1],e1=ePts[i],e2=ePts[i+1];
+      const avgActual=(a1.y+a2.y)/2,avgExpected=(e1.y+e2.y)/2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(a1.x,a1.y);ctx.lineTo(a2.x,a2.y);
+      ctx.lineTo(e2.x,e2.y);ctx.lineTo(e1.x,e1.y);
+      ctx.closePath();
+      ctx.fillStyle=avgActual>avgExpected?'rgba(224,90,90,.12)':'rgba(76,175,125,.1)';
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+};
+
+// ── BUILD CHART ───────────────────────────────────────────────────────────────
 function buildChart(points, er, cr){
+  pulseActive=false;
   if(mainChart)mainChart.destroy();
   const ctx=document.getElementById('mainChart').getContext('2d');
   if(!points||!points.length)return;
+
   const unit=points[0]?.unit_type||'units';
-  const sc={morning:'rgba(201,163,71,.9)',evening:'rgba(90,158,224,.9)',night:'rgba(168,85,247,.9)'};
-  const scBorder={morning:'rgba(201,163,71,.3)',evening:'rgba(90,158,224,.3)',night:'rgba(168,85,247,.3)'};
+  // Sort chronologically
+  const shiftOrd={morning:0,evening:1,night:2};
+  const sorted=[...points].sort((a,b)=>{
+    if(a.date!==b.date)return a.date<b.date?-1:1;
+    return shiftOrd[a.shift]-shiftOrd[b.shift];
+  });
 
-  // Sort points by units for line connection
-  const sorted=[...points].sort((a,b)=>a.units-b.units);
+  const labels=sorted.map(p=>{
+    const d=new Date(p.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+    const s=p.shift==='morning'?'M':p.shift==='evening'?'E':'N';
+    return `${d} ${s}`;
+  });
 
+  const actualEnergy=sorted.map(p=>p.energy_kwh);
+  const costData=sorted.map(p=>p.cost_lkr);
+  const prodData=sorted.map(p=>p.units);
+
+  // Regression expected energy for each point
+  let expectedEnergy=[],deviations=[],stdDev=0,threshold=0;
+  if(er){
+    expectedEnergy=sorted.map(p=>+(er.slope*p.units+er.intercept).toFixed(2));
+    deviations=sorted.map((p,i)=>actualEnergy[i]-expectedEnergy[i]);
+    const mean=deviations.reduce((a,b)=>a+b,0)/deviations.length;
+    stdDev=Math.sqrt(deviations.reduce((a,d)=>a+Math.pow(d-mean,2),0)/deviations.length);
+    threshold=Math.max(stdDev*1.2,5); // minimum 5 kWh threshold
+  }
+
+  // Identify loss / efficient points
+  const lossPoints=[],effPoints=[];
+  sorted.forEach((p,i)=>{
+    if(!er)return;
+    const dev=deviations[i];
+    if(dev>threshold)lossPoints.push({x:i,y:actualEnergy[i],date:p.date,shift:p.shift,units:p.units,dev,devPct:((dev/expectedEnergy[i])*100).toFixed(1)});
+    else if(dev<-threshold)effPoints.push({x:i,y:actualEnergy[i],date:p.date,shift:p.shift,units:p.units,dev,devPct:((dev/expectedEnergy[i])*100).toFixed(1)});
+  });
+
+  // Update stats
+  document.getElementById('s-kwh').textContent=fN(actualEnergy.reduce((a,b)=>a+b,0)/actualEnergy.length,1)+' kWh';
+  document.getElementById('s-intensity').textContent=er?er.avg_per_unit+' kWh':'—';
+  document.getElementById('s-cost').textContent=cr?'LKR '+fN(cr.avg_per_unit,0):'—';
+  document.getElementById('s-loss').textContent=lossPoints.length;
+  document.getElementById('s-eff').textContent=effPoints.length;
+  document.getElementById('statGrid').style.display='grid';
+
+  // Insight panels
+  document.getElementById('insightRow').style.display='grid';
+  document.getElementById('lossInsights').innerHTML=lossPoints.length
+    ?lossPoints.map(p=>`<div class="insight-item">
+        <span>${new Date(p.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} · ${p.shift}</span>
+        <span style="color:var(--peak);font-weight:700">+${fN(p.dev,1)} kWh (${p.devPct}% over)</span>
+      </div>`).join('')
+    :'<div style="font-size:11px;color:var(--muted)">No loss shifts detected ✓</div>';
+  document.getElementById('effInsights').innerHTML=effPoints.length
+    ?effPoints.map(p=>`<div class="insight-item">
+        <span>${new Date(p.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} · ${p.shift}</span>
+        <span style="color:var(--op);font-weight:700">${fN(p.dev,1)} kWh (${Math.abs(p.devPct)}% under)</span>
+      </div>`).join('')
+    :'<div style="font-size:11px;color:var(--muted)">No peak efficiency shifts yet</div>';
+
+  // Datasets
   const datasets=[
-    // ── Energy data points with connecting line ──
+    // 0: Production bars (background)
     {
-      label:'Energy (kWh)',
-      type:'scatter',
-      data:sorted.map(p=>({x:p.units,y:p.energy_kwh,shift:p.shift,date:p.date})),
-      backgroundColor:sorted.map(p=>sc[p.shift]),
-      pointBorderColor:sorted.map(p=>scBorder[p.shift]),
-      pointBorderWidth:2,
-      pointRadius:8,
-      pointHoverRadius:12,
-      pointStyle:'circle',
-      showLine:true,
-      borderColor:'rgba(76,175,125,.2)',
-      borderWidth:1.5,
-      borderDash:[4,4],
-      yAxisID:'yLeft',
-      animation:{duration:1000,easing:'easeOutElastic',delay:(ctx)=>ctx.dataIndex*80}
+      type:'bar',label:`Production (${unit})`,
+      data:prodData,
+      backgroundColor:'rgba(90,158,224,.08)',
+      borderColor:'rgba(90,158,224,.18)',
+      borderWidth:1,borderRadius:3,
+      yAxisID:'yProd',order:10
     },
-    // ── Cost data points with connecting line ──
+    // 1: Actual energy line
     {
-      label:'Cost (LKR)',
-      type:'scatter',
-      data:sorted.map(p=>({x:p.units,y:p.cost_lkr,shift:p.shift,date:p.date})),
-      backgroundColor:sorted.map(p=>sc[p.shift]),
-      pointBorderColor:sorted.map(p=>scBorder[p.shift]),
-      pointBorderWidth:2,
-      pointRadius:8,
-      pointHoverRadius:12,
-      pointStyle:'triangle',
-      showLine:true,
-      borderColor:'rgba(168,85,247,.2)',
-      borderWidth:1.5,
-      borderDash:[4,4],
-      yAxisID:'yRight',
-      animation:{duration:1000,easing:'easeOutElastic',delay:(ctx)=>ctx.dataIndex*80+200}
+      type:'line',label:'Actual Energy (kWh)',
+      data:actualEnergy,
+      borderColor:'#5A9EE0',backgroundColor:'rgba(90,158,224,.05)',
+      borderWidth:2.5,tension:0.3,
+      pointRadius:5,pointBackgroundColor:sorted.map((_,i)=>{
+        if(lossPoints.find(p=>p.x===i))return'#E05A5A';
+        if(effPoints.find(p=>p.x===i))return'#4CAF7D';
+        return '#5A9EE0';
+      }),
+      pointBorderColor:'rgba(255,255,255,.2)',
+      pointBorderWidth:1.5,
+      fill:false,yAxisID:'yEnergy',order:2,
+      animation:{duration:1200,easing:'easeOutQuart'}
+    },
+    // 2: Expected energy (regression) line
+    ...(er?[{
+      type:'line',label:'Expected Energy (Regression)',
+      data:expectedEnergy,
+      borderColor:'#C9A347',backgroundColor:'transparent',
+      borderWidth:2,borderDash:[8,4],tension:0.3,
+      pointRadius:0,fill:false,
+      yAxisID:'yEnergy',order:3,
+      animation:{duration:0}
+    }]:[]),
+    // 3: Loss points highlight
+    ...(lossPoints.length?[{
+      type:'scatter',label:'⚠ Energy Loss',
+      data:lossPoints.map(p=>({x:p.x,y:p.y})),
+      backgroundColor:'rgba(224,90,90,.9)',
+      borderColor:'rgba(224,90,90,.4)',
+      borderWidth:2,
+      pointRadius:11,pointHoverRadius:14,
+      yAxisID:'yEnergy',order:1,
+      animation:{duration:800,delay:1400}
+    }]:[]),
+    // 4: Efficient points highlight
+    ...(effPoints.length?[{
+      type:'scatter',label:'✓ High Efficiency',
+      data:effPoints.map(p=>({x:p.x,y:p.y})),
+      backgroundColor:'rgba(76,175,125,.9)',
+      borderColor:'rgba(76,175,125,.4)',
+      borderWidth:2,
+      pointRadius:11,pointHoverRadius:14,
+      yAxisID:'yEnergy',order:1,
+      animation:{duration:800,delay:1600}
+    }]:[]),
+    // Last: Cost line
+    {
+      type:'line',label:'Cost (LKR)',
+      data:costData,
+      borderColor:'#A855F7',backgroundColor:'transparent',
+      borderWidth:2,borderDash:[5,3],tension:0.3,
+      pointRadius:3,pointBackgroundColor:'#A855F7',
+      fill:false,yAxisID:'yCost',order:4,
+      animation:{duration:0}
     }
   ];
 
-  // ── Regression lines (added after animation) ──
-  if(er){
-    datasets.push({
-      label:'Energy Regression',
-      type:'line',
-      data:er.regression_line,
-      borderColor:'#4CAF7D',
-      borderWidth:3,
-      pointRadius:0,tension:0,
-      borderDash:[],borderDashOffset:0,
-      yAxisID:'yLeft',
-      animation:{duration:0},
-      shadowColor:'rgba(76,175,125,.5)',
-      shadowBlur:10
-    });
-  }
-  if(cr){
-    datasets.push({
-      label:'Cost Regression',
-      type:'line',
-      data:cr.regression_line,
-      borderColor:'#A855F7',
-      borderWidth:3,
-      pointRadius:0,tension:0,
-      borderDash:[],borderDashOffset:0,
-      yAxisID:'yRight',
-      animation:{duration:0},
-      shadowColor:'rgba(168,85,247,.5)',
-      shadowBlur:10
-    });
-  }
+  // Track dataset indices for pulse
+  let idx=0;
+  lossDatasetIdx=-1;effDatasetIdx=-1;
+  datasets.forEach((ds,i)=>{
+    if(ds.label==='⚠ Energy Loss')lossDatasetIdx=i;
+    if(ds.label==='✓ High Efficiency')effDatasetIdx=i;
+  });
 
-  // Glow plugin for regression lines
   const glowPlugin={
     id:'glow',
     beforeDatasetDraw(chart,args){
-      if(args.index<2)return;
-      const color=args.index===2?'rgba(76,175,125,.5)':'rgba(168,85,247,.5)';
-      chart.ctx.shadowColor=color;chart.ctx.shadowBlur=14;
+      const ds=chart.data.datasets[args.index];
+      if(ds.label==='Expected Energy (Regression)'){chart.ctx.shadowColor='rgba(201,163,71,.4)';chart.ctx.shadowBlur=10;}
+      else if(ds.label==='Actual Energy (kWh)'){chart.ctx.shadowColor='rgba(90,158,224,.3)';chart.ctx.shadowBlur=8;}
+      else if(ds.label==='Cost (LKR)'){chart.ctx.shadowColor='rgba(168,85,247,.4)';chart.ctx.shadowBlur=8;}
     },
-    afterDatasetDraw(chart,args){
-      if(args.index<2)return;
-      chart.ctx.shadowColor='transparent';chart.ctx.shadowBlur=0;
-    }
+    afterDatasetDraw(chart){chart.ctx.shadowColor='transparent';chart.ctx.shadowBlur=0;}
   };
 
   mainChart=new Chart(ctx,{
-    type:'scatter',
-    data:{datasets},
-    plugins:[glowPlugin],
+    type:'bar',
+    data:{labels,datasets},
+    plugins:[shadingPlugin,pulsePlugin,glowPlugin],
     options:{
       responsive:true,maintainAspectRatio:false,
       animation:{duration:1000},
-      interaction:{mode:'nearest',intersect:true},
+      interaction:{mode:'index',intersect:false},
       plugins:{
-        legend:{display:false},
+        legend:{
+          display:true,position:'top',
+          labels:{color:'#8B90B0',font:{size:10},padding:16,boxWidth:10,usePointStyle:true,
+            filter:item=>!['⚠ Energy Loss','✓ High Efficiency'].includes(item.text)||true}
+        },
         tooltip:{
-          backgroundColor:'#0A0F1E',borderColor:'#243450',borderWidth:1,
+          backgroundColor:'#080D1C',borderColor:'#243450',borderWidth:1,
           cornerRadius:12,padding:14,
           titleColor:'#C9A347',bodyColor:'#F0EDE6',
           callbacks:{
             title:items=>{
-              const ds=items[0].dataset;
-              const p=ds.data[items[0].dataIndex];
-              return p&&p.date?`${p.date}  ·  ${p.shift||''} shift`:'Regression line';
+              const i=items[0].dataIndex;
+              const p=sorted[i];
+              if(!p)return labels[i];
+              const isLoss=lossPoints.find(lp=>lp.x===i);
+              const isEff=effPoints.find(ep=>ep.x===i);
+              const tag=isLoss?' ⚠ LOSS DETECTED':isEff?' ✓ HIGH EFFICIENCY':'';
+              return `${new Date(p.date).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}  ·  ${p.shift} shift${tag}`;
             },
             label:items=>{
-              const ds=items.dataset;
-              const p=ds.data[items.dataIndex];
-              if(ds.yAxisID==='yLeft')return` ⚡ Energy: ${fN(items.raw.y,1)} kWh`;
-              if(ds.yAxisID==='yRight')return` 💰 Cost: LKR ${fN(items.raw.y,0)}`;
-              return` ${fN(items.raw.y,1)}`;
+              const i=items.dataIndex;
+              const p=sorted[i];
+              const lines=[];
+              if(items.dataset.label===`Production (${unit})`)lines.push(` 🏭 Production: ${fN(prodData[i],0)} ${unit}`);
+              else if(items.dataset.label==='Actual Energy (kWh)'){
+                lines.push(` ⚡ Actual Energy: ${fN(actualEnergy[i],1)} kWh`);
+                if(er&&expectedEnergy[i]){
+                  lines.push(` 📊 Expected Energy: ${fN(expectedEnergy[i],1)} kWh`);
+                  const dev=deviations[i];
+                  const devPct=((dev/expectedEnergy[i])*100).toFixed(1);
+                  if(dev>threshold)lines.push(` ⚠ Loss: +${fN(dev,1)} kWh (${devPct}% over expected)`);
+                  else if(dev<-threshold)lines.push(` ✓ Saved: ${fN(Math.abs(dev),1)} kWh (${Math.abs(devPct)}% below expected)`);
+                  else lines.push(` ✓ Within normal range`);
+                }
+              }
+              else if(items.dataset.label==='Cost (LKR)')lines.push(` 💰 Cost: LKR ${fN(costData[i],0)}`);
+              else if(items.dataset.label==='Expected Energy (Regression)')lines.push(` 📈 Expected: ${fN(expectedEnergy[i],1)} kWh`);
+              return lines;
+            },
+            afterBody:items=>{
+              const i=items[0].dataIndex;
+              const p=sorted[i];
+              if(!p)return;
+              return [``, ` 🏭 Production: ${fN(p.units,0)} ${unit}`];
             }
           }
         }
       },
       scales:{
-        x:{
-          grid:{color:'rgba(28,42,66,.4)'},
-          ticks:{color:'#6B7191',font:{size:10}},
-          title:{display:true,text:`Production (${unit})`,color:'#8B90B0',font:{size:11,weight:'600'},padding:{top:10}}
-        },
-        yLeft:{
+        x:{grid:{color:'rgba(28,42,66,.4)'},ticks:{color:'#6B7191',font:{size:10},maxRotation:45}},
+        yEnergy:{
           position:'left',
-          grid:{color:'rgba(76,175,125,.08)'},
-          ticks:{color:'#4CAF7D',font:{size:10},callback:v=>fN(v,1)+' kWh'},
-          title:{display:true,text:'Energy (kWh)',color:'#4CAF7D',font:{size:11,weight:'600'},padding:{bottom:10}}
+          grid:{color:'rgba(90,158,224,.08)'},
+          ticks:{color:'#5A9EE0',font:{size:10},callback:v=>fN(v,1)+' kWh'},
+          title:{display:true,text:'Energy (kWh)',color:'#5A9EE0',font:{size:10,weight:'600'}}
         },
-        yRight:{
+        yCost:{
           position:'right',
           grid:{drawOnChartArea:false},
           ticks:{color:'#A855F7',font:{size:10},callback:v=>'LKR '+fN(v,0)},
-          title:{display:true,text:'Cost (LKR)',color:'#A855F7',font:{size:11,weight:'600'},padding:{bottom:10}}
+          title:{display:true,text:'Cost (LKR)',color:'#A855F7',font:{size:10,weight:'600'}}
+        },
+        yProd:{
+          position:'right',
+          grid:{drawOnChartArea:false},
+          ticks:{display:false},
+          display:false
         }
       }
     }
   });
 
-  // Animate regression lines after dots appear
-  const erIdx=er?2:-1,crIdx=cr?(er?3:2):-1;
-  if(er)animateLine(mainChart,erIdx,2000,1200);
-  if(cr)animateLine(mainChart,crIdx,2000,1600);
+  // Animate actual energy line drawing
+  animateLine(mainChart,1,1800,200);
+  // Animate regression expected line
+  if(er)animateLine(mainChart,2,2000,800);
+  // Animate cost line
+  const costDsIdx=datasets.length-1;
+  animateLine(mainChart,costDsIdx,1600,400);
+  // Start pulse for loss/efficient points
+  setTimeout(()=>startPulse(mainChart),2000);
 }
 
 // ── ADD PRODUCTION ────────────────────────────────────────────────────────────
 async function addProd(){
-  const date=document.getElementById('prodDate').value;
-  const shift=document.getElementById('prodShift').value;
-  const units=document.getElementById('prodUnits').value;
-  const unitType=document.getElementById('prodUnitType').value||'pieces';
+  const date=document.getElementById('prodDate').value,shift=document.getElementById('prodShift').value;
+  const units=document.getElementById('prodUnits').value,unitType=document.getElementById('prodUnitType').value||'pieces';
   const notes=document.getElementById('prodNotes').value;
   const msg=document.getElementById('prodMsg');
-  if(!date||!units){msg.textContent='Please enter date and units produced.';msg.style.color='#E05A5A';msg.style.display='block';return;}
+  if(!date||!units){msg.textContent='Please enter date and units.';msg.style.color='#E05A5A';msg.style.display='block';return;}
   try{
     const resp=await fetch(`${API_URL}/api/production/add`,{
       method:'POST',headers:{'Content-Type':'application/json','x-api-key':API_KEY},
@@ -509,9 +670,8 @@ async function loadProdList(){
     const resp=await fetch(`${API_URL}/api/production/list?site_id=${user.site_id}&from=${from}&to=${to}`,{headers:{'x-api-key':API_KEY}});
     const data=await resp.json();
     const c=document.getElementById('prodTable');
-    if(!data.length){c.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0">No entries for this period. Add production data above.</div>';return;}
-    c.innerHTML=`<table class="prod-table">
-      <thead><tr><th>Date</th><th>Shift</th><th>Units</th><th>Type</th><th>Notes</th></tr></thead>
+    if(!data.length){c.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0">No entries. Add production data above.</div>';return;}
+    c.innerHTML=`<table class="prod-table"><thead><tr><th>Date</th><th>Shift</th><th>Units</th><th>Type</th><th>Notes</th></tr></thead>
       <tbody>${data.map(r=>`<tr>
         <td style="color:var(--sub)">${new Date(r.production_date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</td>
         <td><span class="sb ${r.shift==='morning'?'sm':r.shift==='evening'?'se':'sn'}">${r.shift}</span></td>
@@ -530,42 +690,31 @@ async function loadRegression(){
     const pts=data.points||[];
     const er=data.energy_regression,cr=data.cost_regression;
 
-    // Badges
-    document.getElementById('eBadge').textContent=er?'⚡ Energy R²='+er.r2_percent+'%':data.message||'No data';
-    document.getElementById('cBadge').textContent=cr?'💰 Cost R²='+cr.r2_percent+'%':'';
-
-    // Stats
-    if(er&&cr){
-      document.getElementById('e-r2').textContent=(er.r2*100).toFixed(1)+'%';
-      document.getElementById('e-int').textContent=er.avg_per_unit+' kWh';
-      document.getElementById('e-base').textContent=fN(er.baseline,1)+' kWh';
-      document.getElementById('c-r2').textContent=(cr.r2*100).toFixed(1)+'%';
-      document.getElementById('c-int').textContent='LKR '+fN(cr.avg_per_unit,0);
-      document.getElementById('c-base').textContent='LKR '+fN(cr.baseline,0);
-      document.getElementById('statRow').style.display='grid';
-      const unit=pts[0]?.unit_type||'units';
-      document.getElementById('eqEnergy').textContent=`Energy = ${er.variable_per_unit} × Units + ${fN(er.baseline,1)} kWh`;
-      document.getElementById('eqCost').textContent=`Cost = LKR ${fN(cr.variable_per_unit,2)} × Units + LKR ${fN(cr.baseline,0)}`;
-      document.getElementById('eqRow').style.display='grid';
-      // Summary
-      document.getElementById('summaryContent').innerHTML=`
-        <strong style="color:var(--op)">⚡ Energy</strong> — Each ${unit} consumes <strong style="color:var(--gold)">${er.avg_per_unit} kWh</strong> on average.
-        Baseline per shift: <strong style="color:var(--gold)">${fN(er.baseline,1)} kWh</strong>.
-        Variable: <strong style="color:var(--gold)">${er.variable_per_unit} kWh / ${unit}</strong>.<br><br>
-        <strong style="color:var(--purple)">💰 Cost</strong> — Each ${unit} costs <strong style="color:var(--gold)">LKR ${fN(cr.avg_per_unit,0)}</strong>.
-        Baseline per shift: <strong style="color:var(--gold)">LKR ${fN(cr.baseline,0)}</strong>.
-        Variable: <strong style="color:var(--gold)">LKR ${fN(cr.variable_per_unit,2)} / ${unit}</strong>.<br><br>
-        <em style="color:var(--muted);font-size:11px">
-          ${er.r2>=0.8?'✅ Strong correlation — energy and cost are well-driven by production output.':er.r2>=0.5?'⚠️ Moderate correlation — other factors also influence energy use.':'❌ Weak correlation — add more data points for a reliable regression.'}
-        </em>`;
-      document.getElementById('summaryBox').style.display='block';
+    const badge=document.getElementById('regBadge');
+    if(er){
+      badge.textContent=`R² = ${er.r2_percent}%  ·  ${er.interpretation}  ·  ${pts.length} shifts`;
     }else{
-      document.getElementById('statRow').style.display='none';
-      document.getElementById('eqRow').style.display='none';
-      document.getElementById('summaryBox').style.display='none';
+      badge.textContent=data.message||'Add production data to run analysis';
     }
 
     buildChart(pts,er,cr);
+
+    if(er&&cr&&pts.length>=2){
+      const unit=pts[0]?.unit_type||'units';
+      document.getElementById('summaryContent').innerHTML=`
+        <strong style="color:var(--blue)">⚡ Energy Model</strong> — Regression R² = ${er.r2_percent}% (${er.interpretation}).
+        For every ${unit} produced, the factory consumes <strong style="color:var(--gold)">${er.variable_per_unit} kWh</strong> plus a fixed baseline of <strong style="color:var(--gold)">${fN(er.baseline,1)} kWh</strong> per shift (lighting, HVAC, idle machines).<br><br>
+        <strong style="color:var(--purple)">💰 Cost Model</strong> — Each ${unit} costs <strong style="color:var(--gold)">LKR ${fN(cr.avg_per_unit,0)}</strong> in electricity.
+        Fixed electricity cost per shift: <strong style="color:var(--gold)">LKR ${fN(cr.baseline,0)}</strong>.<br><br>
+        <strong style="color:var(--peak)">⚠ Loss Detection</strong> — Shifts where the <em>blue line</em> is above the <em>gold dashed line</em> indicate energy waste.
+        The <strong style="color:var(--peak)">red shaded area</strong> shows the loss. The <em>red pulsing dot</em> marks the worst shifts.<br><br>
+        <strong style="color:var(--op)">✓ Efficiency Detection</strong> — Shifts where actual energy is <em>below</em> the regression line show peak efficiency.
+        The <strong style="color:var(--op)">green shaded area</strong> shows savings. The <em>green pulsing dot</em> marks the best performing shifts.
+      `;
+      document.getElementById('summaryBox').style.display='block';
+    }else{
+      document.getElementById('summaryBox').style.display='none';
+    }
   }catch(e){console.error(e);}
 }
 
