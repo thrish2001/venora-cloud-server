@@ -1,5 +1,7 @@
+
 const express = require('express');
 const cors    = require('cors');
+const path    = require('path');
 require('dotenv').config();
 const pool = require('./db');
 const { calculateCosts } = require('./costCalculator');
@@ -7,9 +9,17 @@ const { calculateCosts } = require('./costCalculator');
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
 
-// ── ROUTES ────────────────────────────────────────────────────────────────────
+// ── STATIC FILES — must come BEFORE API routes ──────────────────────────────
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Explicit routes for each HTML page so they always work
+app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
+app.get('/login.html',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/production.html',(req, res) => res.sendFile(path.join(__dirname, 'public', 'production.html')));
+app.get('/upload.html',    (req, res) => res.sendFile(path.join(__dirname, 'public', 'upload.html')));
+
+// ── API ROUTES ───────────────────────────────────────────────────────────────
 app.use('/api/upload',     require('./routes/upload'));
 app.use('/api/analytics',  require('./routes/analytics'));
 app.use('/api/sites',      require('./routes/sites'));
@@ -17,7 +27,7 @@ app.use('/api/tariff',     require('./routes/tariff'));
 app.use('/api/auth',       require('./routes/auth'));
 app.use('/api/production', require('./routes/production'));
 
-// ── HEALTH CHECK ──────────────────────────────────────────────────────────────
+// ── HEALTH CHECK ─────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({ status: 'Venora Cloud Server is running', version: '2.0' });
 });
@@ -25,9 +35,7 @@ app.get('/', (req, res) => {
 // ── MANUAL COST CALCULATION ───────────────────────────────────────────────────
 app.post('/api/calculate-costs', async (req, res) => {
   const key = req.headers['x-api-key'];
-  if (key !== process.env.API_SECRET_KEY) {
-    return res.status(401).json({ error: 'Unauthorised' });
-  }
+  if (key !== process.env.API_SECRET_KEY) return res.status(401).json({ error: 'Unauthorised' });
   const { site_id } = req.body;
   await calculateCosts(site_id);
   res.json({ success: true });
@@ -37,8 +45,6 @@ app.post('/api/calculate-costs', async (req, res) => {
 async function initDB() {
   const client = await pool.connect();
   try {
-
-    // Sites table
     await client.query(`
       CREATE TABLE IF NOT EXISTS sites (
         id SERIAL PRIMARY KEY,
@@ -52,7 +58,6 @@ async function initDB() {
     await client.query(`ALTER TABLE sites ADD COLUMN IF NOT EXISTS max_units INT DEFAULT 10`);
     await client.query(`ALTER TABLE sites ADD COLUMN IF NOT EXISTS max_users INT DEFAULT 2`);
 
-    // Tariff config table
     await client.query(`
       CREATE TABLE IF NOT EXISTS tariff_config (
         id SERIAL PRIMARY KEY,
@@ -66,7 +71,6 @@ async function initDB() {
       )
     `);
 
-    // Energy readings table
     await client.query(`
       CREATE TABLE IF NOT EXISTS energy_readings (
         id SERIAL PRIMARY KEY,
@@ -80,13 +84,11 @@ async function initDB() {
       )
     `);
 
-    // Unique index to prevent duplicate readings
     await client.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_readings_unique
       ON energy_readings (site_id, breaker_name, recorded_at)
     `).catch(() => {});
 
-    // Daily cost summary table
     await client.query(`
       CREATE TABLE IF NOT EXISTS daily_cost_summary (
         id SERIAL PRIMARY KEY,
@@ -101,7 +103,6 @@ async function initDB() {
       )
     `);
 
-    // Users table
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -116,7 +117,6 @@ async function initDB() {
       )
     `);
 
-    // Production data table
     await client.query(`
       CREATE TABLE IF NOT EXISTS production_data (
         id SERIAL PRIMARY KEY,
@@ -137,7 +137,7 @@ async function initDB() {
   }
 }
 
-// ── START SERVER ──────────────────────────────────────────────────────────────
+// ── START ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, async () => {
   await initDB();
