@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors    = require('cors');
 const path    = require('path');
@@ -9,17 +8,15 @@ const { calculateCosts } = require('./costCalculator');
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// ── STATIC FILES — must come BEFORE API routes ──────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Explicit routes for each HTML page so they always work
-app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
-app.get('/login.html',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/production.html',(req, res) => res.sendFile(path.join(__dirname, 'public', 'production.html')));
-app.get('/upload.html',    (req, res) => res.sendFile(path.join(__dirname, 'public', 'upload.html')));
+// ── HTML PAGES ────────────────────────────────────────────────────────────────
+app.get('/login.html',      (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/dashboard.html',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
+app.get('/production.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'production.html')));
+app.get('/upload.html',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'upload.html')));
 
-// ── API ROUTES ───────────────────────────────────────────────────────────────
+// ── API ROUTES ────────────────────────────────────────────────────────────────
 app.use('/api/upload',     require('./routes/upload'));
 app.use('/api/analytics',  require('./routes/analytics'));
 app.use('/api/sites',      require('./routes/sites'));
@@ -27,119 +24,30 @@ app.use('/api/tariff',     require('./routes/tariff'));
 app.use('/api/auth',       require('./routes/auth'));
 app.use('/api/production', require('./routes/production'));
 
-// ── HEALTH CHECK ─────────────────────────────────────────────────────────────
-app.get('/', (req, res) => {
-  res.json({ status: 'Venora Cloud Server is running', version: '2.0' });
-});
+app.get('/', (req, res) => res.json({ status: 'Venora Cloud Server running', version: '2.0' }));
 
-// ── MANUAL COST CALCULATION ───────────────────────────────────────────────────
 app.post('/api/calculate-costs', async (req, res) => {
-  const key = req.headers['x-api-key'];
-  if (key !== process.env.API_SECRET_KEY) return res.status(401).json({ error: 'Unauthorised' });
-  const { site_id } = req.body;
-  await calculateCosts(site_id);
+  if (req.headers['x-api-key'] !== process.env.API_SECRET_KEY) return res.status(401).json({ error: 'Unauthorised' });
+  await calculateCosts(req.body.site_id);
   res.json({ success: true });
 });
 
-// ── DATABASE SETUP ────────────────────────────────────────────────────────────
+// ── DATABASE ──────────────────────────────────────────────────────────────────
 async function initDB() {
   const client = await pool.connect();
   try {
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS sites (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        location VARCHAR(200),
-        contract_demand_kva DECIMAL DEFAULT 100,
-        max_units INT DEFAULT 10,
-        max_users INT DEFAULT 2
-      )
-    `);
+    await client.query(`CREATE TABLE IF NOT EXISTS sites (id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, location VARCHAR(200), contract_demand_kva DECIMAL DEFAULT 100, max_units INT DEFAULT 10, max_users INT DEFAULT 2)`);
     await client.query(`ALTER TABLE sites ADD COLUMN IF NOT EXISTS max_units INT DEFAULT 10`);
     await client.query(`ALTER TABLE sites ADD COLUMN IF NOT EXISTS max_users INT DEFAULT 2`);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS tariff_config (
-        id SERIAL PRIMARY KEY,
-        site_id INT REFERENCES sites(id),
-        fixed_charge_lkr DECIMAL DEFAULT 0,
-        demand_charge_per_kva DECIMAL DEFAULT 0,
-        unit_rate_peak DECIMAL DEFAULT 0,
-        unit_rate_offpeak DECIMAL DEFAULT 0,
-        peak_start INT DEFAULT 17,
-        peak_end INT DEFAULT 22
-      )
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS energy_readings (
-        id SERIAL PRIMARY KEY,
-        site_id INT REFERENCES sites(id),
-        breaker_name VARCHAR(100),
-        recorded_at TIMESTAMP,
-        kwh DECIMAL,
-        kva DECIMAL,
-        voltage DECIMAL,
-        uploaded_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-
-    await client.query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_readings_unique
-      ON energy_readings (site_id, breaker_name, recorded_at)
-    `).catch(() => {});
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS daily_cost_summary (
-        id SERIAL PRIMARY KEY,
-        site_id INT REFERENCES sites(id),
-        summary_date DATE,
-        total_kwh DECIMAL,
-        peak_kwh DECIMAL,
-        offpeak_kwh DECIMAL,
-        max_kva DECIMAL,
-        total_cost_lkr DECIMAL,
-        UNIQUE(site_id, summary_date)
-      )
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(200) NOT NULL,
-        site_id INT REFERENCES sites(id),
-        display_name VARCHAR(200),
-        company_name VARCHAR(200),
-        role VARCHAR(20) DEFAULT 'viewer',
-        active BOOLEAN DEFAULT true,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS production_data (
-        id SERIAL PRIMARY KEY,
-        site_id INT REFERENCES sites(id),
-        production_date DATE NOT NULL,
-        shift VARCHAR(20) NOT NULL,
-        units_produced DECIMAL NOT NULL,
-        unit_type VARCHAR(50) DEFAULT 'units',
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(site_id, production_date, shift)
-      )
-    `);
-
-    console.log('Database tables ready');
-  } finally {
-    client.release();
-  }
+    await client.query(`CREATE TABLE IF NOT EXISTS tariff_config (id SERIAL PRIMARY KEY, site_id INT REFERENCES sites(id), fixed_charge_lkr DECIMAL DEFAULT 0, demand_charge_per_kva DECIMAL DEFAULT 0, unit_rate_peak DECIMAL DEFAULT 0, unit_rate_offpeak DECIMAL DEFAULT 0, peak_start INT DEFAULT 17, peak_end INT DEFAULT 22)`);
+    await client.query(`CREATE TABLE IF NOT EXISTS energy_readings (id SERIAL PRIMARY KEY, site_id INT REFERENCES sites(id), breaker_name VARCHAR(100), recorded_at TIMESTAMP, kwh DECIMAL, kva DECIMAL, voltage DECIMAL, uploaded_at TIMESTAMP DEFAULT NOW())`);
+    await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_readings_unique ON energy_readings (site_id, breaker_name, recorded_at)`).catch(()=>{});
+    await client.query(`CREATE TABLE IF NOT EXISTS daily_cost_summary (id SERIAL PRIMARY KEY, site_id INT REFERENCES sites(id), summary_date DATE, total_kwh DECIMAL, peak_kwh DECIMAL, offpeak_kwh DECIMAL, max_kva DECIMAL, total_cost_lkr DECIMAL, UNIQUE(site_id, summary_date))`);
+    await client.query(`CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username VARCHAR(100) UNIQUE NOT NULL, password VARCHAR(200) NOT NULL, site_id INT REFERENCES sites(id), display_name VARCHAR(200), company_name VARCHAR(200), role VARCHAR(20) DEFAULT 'viewer', active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT NOW())`);
+    await client.query(`CREATE TABLE IF NOT EXISTS production_data (id SERIAL PRIMARY KEY, site_id INT REFERENCES sites(id), production_date DATE NOT NULL, shift VARCHAR(20) NOT NULL, units_produced DECIMAL NOT NULL, unit_type VARCHAR(50) DEFAULT 'units', notes TEXT, created_at TIMESTAMP DEFAULT NOW(), UNIQUE(site_id, production_date, shift))`);
+    console.log('DB ready');
+  } finally { client.release(); }
 }
 
-// ── START ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, async () => {
-  await initDB();
-  console.log('Server running on port ' + PORT);
-});
+app.listen(PORT, async () => { await initDB(); console.log('Server on port ' + PORT); });
