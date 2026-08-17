@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Data — Dirisdigiware</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08090F;--card:#10141F;--card2:#131829;--inp:#181D2C;
+  --border:#1E2840;--text:#F0EDE6;--muted:#6B7191;--sub:#9499B5;
+  --teal:#00C8D4;--teal-d:#009AA5;--teal-bg:rgba(0,200,212,.06);
+  --green:#4CAF7D;--green-bg:rgba(76,175,125,.08);
+  --red:#E05A5A;--red-bg:rgba(224,90,90,.08);
+  --gold:#C9A347;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+/* TOP BAR */
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.brand{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--teal);letter-spacing:1px}
+.brand span{color:#fff}
+.topbar-r{display:flex;align-items:center;gap:10px}
+.badge{background:var(--inp);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--sub)}
+.co-badge{background:var(--teal-bg);border:1px solid rgba(0,200,212,.2);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--teal);font-weight:500}
+.btn-nav{background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn-nav:hover{border-color:var(--teal-d);color:var(--teal)}
+
+/* PAGE */
+.page{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:48px 24px}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:36px;font-weight:700;color:#fff;letter-spacing:-1px;margin-bottom:6px;text-align:center}
+.page-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:48px}
+
+/* UPLOAD CARDS */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:860px}
+@media(max-width:680px){.cards{grid-template-columns:1fr}}
+
+.ucard{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:border-color .2s}
+.ucard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;transition:opacity .2s;opacity:0}
+.ucard:hover{border-color:rgba(0,200,212,.3)}
+.ucard:hover::before{opacity:1}
+.ucard.energy::before{background:linear-gradient(90deg,transparent,var(--teal),transparent)}
+.ucard.production::before{background:linear-gradient(90deg,transparent,var(--green),transparent)}
+
+.ucard-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:20px}
+.energy .ucard-icon{background:var(--teal-bg);border:1px solid rgba(0,200,212,.2)}
+.production .ucard-icon{background:var(--green-bg);border:1px solid rgba(76,175,125,.2)}
+
+.ucard-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px}
+.energy .ucard-title{color:var(--teal)}
+.production .ucard-title{color:var(--green)}
+
+.ucard-desc{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:24px}
+
+/* DROP ZONE */
+.dropzone{border:1.5px dashed var(--border);border-radius:12px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--inp);position:relative;margin-bottom:16px}
+.dropzone:hover,.dropzone.drag{border-color:var(--teal);background:var(--teal-bg)}
+.production .dropzone:hover,.production .dropzone.drag{border-color:var(--green);background:var(--green-bg)}
+.dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dz-icon{font-size:28px;margin-bottom:8px}
+.dz-text{font-size:13px;font-weight:600;color:var(--sub);margin-bottom:3px}
+.dz-hint{font-size:11px;color:var(--muted)}
+.dz-filename{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--teal);margin-top:8px;display:none;word-break:break-all}
+.production .dz-filename{color:var(--green)}
+
+/* UPLOAD BTN */
+.btn-upload{width:100%;padding:13px;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:8px}
+.energy .btn-upload{background:linear-gradient(135deg,var(--teal-d),var(--teal));color:#000}
+.production .btn-upload{background:linear-gradient(135deg,#2E8B57,var(--green));color:#000}
+.btn-upload:hover{opacity:.88;transform:translateY(-1px)}
+.btn-upload:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* RESULT BOX */
+.result{border-radius:10px;padding:14px 16px;margin-top:14px;font-size:12px;line-height:1.8;display:none}
+.result.ok{background:var(--green-bg);border:1px solid rgba(76,175,125,.25);color:var(--green)}
+.result.err{background:var(--red-bg);border:1px solid rgba(224,90,90,.25);color:var(--red)}
+.result .r-title{font-weight:700;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.result .r-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.result .r-row:last-child{border-bottom:none}
+.result .r-key{color:var(--muted)}
+.result .r-val{font-weight:600}
+
+/* PROGRESS */
+.prog-wrap{height:4px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden;display:none}
+.prog-bar{height:100%;width:0%;border-radius:2px;transition:width .3s ease}
+.energy .prog-bar{background:var(--teal)}
+.production .prog-bar{background:var(--green)}
+
+/* FORMAT HINT */
+.fmt-hint{background:var(--inp);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-top:16px;font-size:11px;color:var(--muted);line-height:1.7}
+.fmt-hint strong{color:var(--sub);display:block;margin-bottom:4px}
+.fmt-tag{display:inline-block;background:var(--card2);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--teal);margin:1px}
+.production .fmt-tag{color:var(--green)}
+
+/* FOOTER */
+.footer{text-align:center;padding:20px;font-size:11px;color:#3A4060;border-top:1px solid var(--border)}
+.footer strong{color:var(--teal-d)}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="brand"><span>DIRIS</span>DIGIWARE</div>
+    <span style="color:var(--border)">|</span>
+    <span style="font-size:12px;color:var(--muted)">Data Upload</span>
+  </div>
+  <div class="topbar-r">
+    <div class="co-badge" id="coBadge">—</div>
+    <div class="badge" id="userBadge">—</div>
+    <a href="dashboard.html" class="btn-nav">&#9632; Dashboard</a>
+    <a href="production.html" class="btn-nav">&#128202; Production</a>
+    <button class="btn-nav" onclick="logout()">Sign Out</button>
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="page">
+  <div class="page-title">Upload Data</div>
+  <div class="page-sub">Select your CSV file and click Upload — the system handles the rest automatically</div>
+
+  <div class="cards">
+
+    <!-- ══ ENERGY CSV ══ -->
+    <div class="ucard energy">
+      <div class="ucard-icon">⚡</div>
+      <div class="ucard-title">Energy CSV</div>
+      <div class="ucard-desc">
+        Upload energy meter data from any company. Supports both formats —
+        single datetime column <em>or</em> separate Date and Time columns.
+        Data is processed and cost calculations run automatically.
+      </div>
+
+      <div class="dropzone" id="eDZ" ondragover="onDrag(event,'eDZ')" ondragleave="offDrag('eDZ')" ondrop="onDrop(event,'eFile','eDZ','eFilename')">
+        <input type="file" id="eFile" accept=".csv" onchange="onFile('eFile','eFilename','eDZ')">
+        <div class="dz-icon">📂</div>
+        <div class="dz-text">Click to browse or drag & drop</div>
+        <div class="dz-hint">CSV files only</div>
+        <div class="dz-filename" id="eFilename"></div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Site ID</label>
+        <input type="number" id="eSiteId" min="1" placeholder="e.g. 2"
+          style="background:var(--inp);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);outline:none;width:100%;transition:border-color .15s"
+          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Your own factory = 1. Another company = their site_id from the database.</div>
+      </div>
+
+      <button class="btn-upload" id="eBtn" onclick="uploadEnergy()" disabled>
+        <span id="eBtnIcon">⬆</span>
+        <span id="eBtnText">Select a file first</span>
+      </button>
+
+      <div class="prog-wrap" id="eProgWrap"><div class="prog-bar" id="eProgBar"></div></div>
+
+      <div class="result" id="eResult"></div>
+
+      <div class="fmt-hint">
+        <strong>Accepted CSV column names</strong>
+        Datetime: <span class="fmt-tag">recorded_at</span><span class="fmt-tag">datetime</span><span class="fmt-tag">date</span>+<span class="fmt-tag">time</span><br>
+        Energy: <span class="fmt-tag">kwh</span><span class="fmt-tag">energy</span><span class="fmt-tag">kw</span><br>
+        Demand: <span class="fmt-tag">kva</span><span class="fmt-tag">demand</span><br>
+        Circuit: <span class="fmt-tag">breaker_name</span><span class="fmt-tag">breaker</span><span class="fmt-tag">circuit</span>
+      </div>
+    </div>
+
+    <!-- ══ PRODUCTION CSV ══ -->
+    <div class="ucard production">
+      <div class="ucard-icon">🏭</div>
+      <div class="ucard-title">Production CSV</div>
+      <div class="ucard-desc">
+        Upload production output data per shift. Used for regression analysis —
+        matching energy consumption against units produced to detect
+        waste and reward efficiency.
+      </div>
+
+      <div class="dropzone" id="pDZ" ondragover="onDrag(event,'pDZ')" ondragleave="offDrag('pDZ')" ondrop="onDrop(event,'pFile','pDZ','pFilename')">
+        <input type="file" id="pFile" accept=".csv" onchange="onFile('pFile','pFilename','pDZ')">
+        <div class="dz-icon">📂</div>
+        <div class="dz-text">Click to browse or drag & drop</div>
+        <div class="dz-hint">CSV files only</div>
+        <div class="dz-filename" id="pFilename"></div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Site ID</label>
+        <input type="number" id="pSiteId" min="1" placeholder="e.g. 2"
+          style="background:var(--inp);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);outline:none;width:100%;transition:border-color .15s"
+          onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Match this to the same site_id as the energy data.</div>
+      </div>
+
+      <button class="btn-upload" id="pBtn" onclick="uploadProduction()" disabled>
+        <span id="pBtnIcon">⬆</span>
+        <span id="pBtnText">Select a file first</span>
+      </button>
+
+      <div class="prog-wrap" id="pProgWrap"><div class="prog-bar" id="pProgBar"></div></div>
+
+      <div class="result" id="pResult"></div>
+
+      <div class="fmt-hint">
+        <strong>Required CSV columns</strong>
+        <span class="fmt-tag">date</span> — production date (YYYY-MM-DD or DD/MM/YYYY)<br>
+        <span class="fmt-tag">shift</span> — morning / evening / night<br>
+        <span class="fmt-tag">units_produced</span> — number of units<br>
+        <span class="fmt-tag">unit_type</span> — pieces / tons / kg (optional)<br>
+        <span class="fmt-tag">notes</span> — any notes (optional)
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">
+  Dirisdigiware Energy Intelligence Platform &nbsp;·&nbsp;
+  Developed by <strong>Thirasha Bandara</strong> &nbsp;·&nbsp;
+  Venora Lanka Power Panels (Pvt) Ltd
+</div>
+
+<script>
+const API = 'https://venora-cloud-server-production.up.railway.app';
+const API_KEY = 'venora-super-secret-key-2025-change-this';
+let user = null;
+
+// ── AUTH ────────────────────────────────────────────────────────────────────
+function checkAuth() {
+  const s = sessionStorage.getItem('user');
+  if (!s) { window.location.href = 'login.html'; return false; }
+  user = JSON.parse(s);
+  document.getElementById('userBadge').textContent = user.name || user.username;
+  document.getElementById('coBadge').textContent   = user.company || user.site_name || 'Site ' + user.site_id;
+  // Pre-fill site id from logged in user
+  document.getElementById('eSiteId').value = user.site_id || '';
+  document.getElementById('pSiteId').value = user.site_id || '';
+  return true;
+}
+function logout() { sessionStorage.removeItem('user'); window.location.href = 'login.html'; }
+
+// ── DRAG & DROP ─────────────────────────────────────────────────────────────
+function onDrag(e, dzId) { e.preventDefault(); document.getElementById(dzId).classList.add('drag'); }
+function offDrag(dzId)   { document.getElementById(dzId).classList.remove('drag'); }
+function onDrop(e, fileId, dzId, nameId) {
+  e.preventDefault();
+  offDrag(dzId);
+  const f = e.dataTransfer.files[0];
+  if (!f) return;
+  // Assign to the file input
+  const dt = new DataTransfer();
+  dt.items.add(f);
+  document.getElementById(fileId).files = dt.files;
+  showFilename(nameId, f.name);
+  enableBtn(fileId === 'eFile' ? 'eBtn' : 'pBtn');
+}
+function onFile(fileId, nameId, dzId) {
+  const f = document.getElementById(fileId).files[0];
+  if (!f) return;
+  showFilename(nameId, f.name);
+  enableBtn(fileId === 'eFile' ? 'eBtn' : 'pBtn');
+}
+function showFilename(nameId, name) {
+  const el = document.getElementById(nameId);
+  el.textContent = '📄 ' + name;
+  el.style.display = 'block';
+}
+function enableBtn(btnId) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = false;
+  const textId = btnId + 'Text';
+  document.getElementById(textId).textContent = 'Upload Now';
+}
+
+// ── RESULT RENDERER ─────────────────────────────────────────────────────────
+function showResult(id, ok, data) {
+  const el = document.getElementById(id);
+  el.className = 'result ' + (ok ? 'ok' : 'err');
+  if (ok) {
+    el.innerHTML = `
+      <div class="r-title">✅ Upload Successful</div>
+      <div class="r-row"><span class="r-key">Format detected</span><span class="r-val">${data.format_detected || '—'}</span></div>
+      <div class="r-row"><span class="r-key">Rows in file</span><span class="r-val">${data.rows_parsed || data.rows_processed || '—'}</span></div>
+      <div class="r-row"><span class="r-key">Rows inserted</span><span class="r-val">${data.rows_inserted || data.inserted || '—'}</span></div>
+      <div class="r-row"><span class="r-key">Duplicates skipped</span><span class="r-val">${data.duplicates || 0}</span></div>
+      ${data.rows_skipped ? `<div class="r-row"><span class="r-key">Rows skipped</span><span class="r-val">${data.rows_skipped}</span></div>` : ''}
+      <div style="margin-top:8px;font-size:11px;opacity:.7">${data.message || ''}</div>`;
+  } else {
+    el.innerHTML = `
+      <div class="r-title">❌ Upload Failed</div>
+      <div style="margin-bottom:8px">${data.error || 'Unknown error'}</div>
+      ${data.headers_found ? `<div style="font-size:10px;opacity:.7">Columns found: ${data.headers_found.join(', ')}</div>` : ''}
+      ${data.hint ? `<div style="margin-top:6px;font-size:11px;opacity:.8">💡 ${data.hint}</div>` : ''}`;
+  }
+  el.style.display = 'block';
+}
+
+function setProgress(progWrapId, progBarId, pct) {
+  document.getElementById(progWrapId).style.display = 'block';
+  document.getElementById(progBarId).style.width = pct + '%';
+}
+
+// ── UPLOAD ENERGY CSV ────────────────────────────────────────────────────────
+async function uploadEnergy() {
+  const file   = document.getElementById('eFile').files[0];
+  const siteId = document.getElementById('eSiteId').value;
+  const btn    = document.getElementById('eBtn');
+  const result = document.getElementById('eResult');
+
+  if (!file)   { alert('Please select a CSV file first.'); return; }
+  if (!siteId) { alert('Please enter a Site ID.'); return; }
+
+  btn.disabled = true;
+  document.getElementById('eBtnIcon').textContent = '⏳';
+  document.getElementById('eBtnText').textContent = 'Uploading...';
+  result.style.display = 'none';
+  setProgress('eProgWrap', 'eProgBar', 30);
+
+  try {
+    const text = await file.text();
+    setProgress('eProgWrap', 'eProgBar', 60);
+
+    const resp = await fetch(`${API}/api/upload/csv?site_id=${siteId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + (user.token || ''),
+        'Content-Type': 'text/csv'
+      },
+      body: text
+    });
+
+    setProgress('eProgWrap', 'eProgBar', 100);
+    const data = await resp.json();
+    showResult('eResult', resp.ok && data.success, data);
+
+  } catch (e) {
+    showResult('eResult', false, { error: e.message });
+  } finally {
+    btn.disabled = false;
+    document.getElementById('eBtnIcon').textContent = '⬆';
+    document.getElementById('eBtnText').textContent = 'Upload Now';
+  }
+}
+
+// ── UPLOAD PRODUCTION CSV ─────────────────────────────────────────────────────
+async function uploadProduction() {
+  const file   = document.getElementById('pFile').files[0];
+  const siteId = document.getElementById('pSiteId').value;
+  const btn    = document.getElementById('pBtn');
+  const result = document.getElementById('pResult');
+
+  if (!file)   { alert('Please select a CSV file first.'); return; }
+  if (!siteId) { alert('Please enter a Site ID.'); return; }
+
+  btn.disabled = true;
+  document.getElementById('pBtnIcon').textContent = '⏳';
+  document.getElementById('pBtnText').textContent = 'Uploading...';
+  result.style.display = 'none';
+  setProgress('pProgWrap', 'pProgBar', 30);
+
+  try {
+    const text = await file.text();
+    const rows = parseProductionCSV(text, parseInt(siteId));
+
+    if (!rows.length) {
+      showResult('pResult', false, {
+        error: 'No valid rows found in CSV.',
+        hint:  'Required columns: date, shift, units_produced. Shift must be: morning / evening / night'
+      });
+      return;
+    }
+
+    setProgress('pProgWrap', 'pProgBar', 50);
+
+    // Insert each row via the production API
+    let inserted = 0, failed = 0, errors = [];
+    for (const row of rows) {
+      try {
+        const r = await fetch(`${API}/api/production/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
+          body: JSON.stringify(row)
+        });
+        const d = await r.json();
+        if (d.success) inserted++; else { failed++; errors.push(d.error); }
+      } catch (e) { failed++; errors.push(e.message); }
+    }
+
+    setProgress('pProgWrap', 'pProgBar', 100);
+    showResult('pResult', inserted > 0, {
+      success: inserted > 0,
+      rows_processed: rows.length,
+      inserted,
+      duplicates: failed,
+      message: `${inserted} shifts inserted successfully.${failed ? ' ' + failed + ' failed (likely duplicates).' : ''}`
+    });
+
+  } catch (e) {
+    showResult('pResult', false, { error: e.message });
+  } finally {
+    btn.disabled = false;
+    document.getElementById('pBtnIcon').textContent = '⬆';
+    document.getElementById('pBtnText').textContent = 'Upload Now';
+  }
+}
+
+// ── PRODUCTION CSV PARSER ────────────────────────────────────────────────────
+function parseProductionCSV(text, siteId) {
+  const lines   = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,'').toLowerCase());
+
+  function col(row, ...names) {
+    for (const name of names) {
+      const idx = headers.indexOf(name);
+      if (idx !== -1 && row[idx] !== undefined && row[idx].trim() !== '') return row[idx].trim();
+    }
+    return null;
+  }
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g,''));
+    const dateRaw  = col(cells, 'date', 'production_date');
+    const shift    = col(cells, 'shift');
+    const unitsRaw = col(cells, 'units_produced', 'units', 'production');
+    const unitType = col(cells, 'unit_type', 'type') || 'pieces';
+    const notes    = col(cells, 'notes', 'note') || '';
+
+    if (!dateRaw || !shift || !unitsRaw) continue;
+
+    // Normalise date to YYYY-MM-DD
+    let date = dateRaw;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateRaw)) {
+      const [dd,mm,yyyy] = dateRaw.split('/');
+      date = `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Normalise shift
+    const shiftLower = shift.toLowerCase();
+    const shiftNorm  = shiftLower.includes('morn') ? 'morning'
+                     : shiftLower.includes('eve')  ? 'evening'
+                     : shiftLower.includes('nig')  ? 'night'
+                     : shiftLower;
+
+    rows.push({
+      site_id: siteId,
+      production_date: date,
+      shift: shiftNorm,
+      units_produced: parseFloat(unitsRaw),
+      unit_type: unitType,
+      notes
+    });
+  }
+  return rows;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+checkAuth();
+</script>
+</body>
+</html>
