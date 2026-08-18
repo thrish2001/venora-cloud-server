@@ -3,571 +3,555 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dirisdigiware — Energy Analytics</title>
+<title>Dirisdigiware — Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --gold:#C9A347;--gold-d:#9A7A2E;--gold-l:#F0E0A8;
-  --bg:#08090F;--card:#10141F;--card2:#131829;--inp:#181D2C;
-  --border:#1E2840;--text:#F0EDE6;--muted:#6B7191;--sub:#9499B5;
+  --bg:#070A13;--card:#0D1220;--card2:#111827;--inp:#141D2E;
+  --border:#1C2A42;--border2:#243450;
+  --text:#F0EDE6;--muted:#6B7191;--sub:#8B90B0;
   --peak:#E05A5A;--day:#C9A347;--op:#4CAF7D;--blue:#5A9EE0;
+  --glow-gold:rgba(201,163,71,.15);--glow-peak:rgba(224,90,90,.15);
+  --glow-op:rgba(76,175,125,.15);--glow-blue:rgba(90,158,224,.15);
 }
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
 
-/* TOPBAR */
-.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;flex-shrink:0}
-.brand{display:flex;align-items:center;gap:12px}
-.brand-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);letter-spacing:1px}
-.brand-sep{color:var(--border);font-size:18px}
-.brand-sub{font-size:12px;color:var(--muted);letter-spacing:1px}
+/* ── SIDEBAR ── */
+.sidebar{width:220px;min-height:100vh;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.sidebar-logo{padding:24px 20px 18px;border-bottom:1px solid var(--border)}
+.sidebar-logo .brand{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);letter-spacing:1px}
+.sidebar-logo .tagline{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+.sidebar-nav{flex:1;padding:16px 10px}
+.nav-section{font-size:9px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;padding:0 10px;margin:16px 0 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted);transition:all .2s;text-decoration:none;margin-bottom:2px}
+.nav-item:hover{background:var(--inp);color:var(--text)}
+.nav-item.active{background:linear-gradient(135deg,rgba(201,163,71,.12),rgba(201,163,71,.06));color:var(--gold);border:1px solid rgba(201,163,71,.15)}
+.nav-icon{width:18px;text-align:center;font-size:14px}
+.sidebar-footer{padding:14px;border-top:1px solid var(--border)}
+.user-card{background:var(--inp);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.user-name{font-size:12px;font-weight:600;color:var(--text)}
+.user-role{font-size:10px;color:var(--muted);margin-top:2px}
+.company-tag{font-size:10px;color:var(--gold);background:rgba(201,163,71,.1);border:1px solid rgba(201,163,71,.2);border-radius:6px;padding:2px 8px;margin-top:5px;display:inline-block}
+.btn-logout{width:100%;background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px;font-family:'Inter',sans-serif;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s}
+.btn-logout:hover{border-color:var(--peak);color:var(--peak)}
+
+/* ── MAIN ── */
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{background:rgba(13,18,32,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:50;flex-shrink:0}
+.page-title{font-size:15px;font-weight:700;color:var(--text)}
+.page-sub{font-size:11px;color:var(--muted);margin-top:1px}
 .topbar-right{display:flex;align-items:center;gap:10px}
-.user-badge{background:var(--inp);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--sub)}
-.btn-sm{background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;transition:all .15s}
-.btn-sm:hover{border-color:var(--gold-d);color:var(--gold)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--op);box-shadow:0 0 8px var(--op);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.live-label{font-size:11px;color:var(--op)}
 
-/* CONTROLS */
-.controls{background:var(--card2);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0}
-.ctrl-group{display:flex;align-items:center;gap:6px}
-.ctrl-label{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
-.date-input{background:var(--inp);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-family:'Inter',sans-serif;font-size:12px;color:var(--text);outline:none;cursor:pointer;transition:border-color .15s}
-.date-input:focus{border-color:var(--gold-d)}
-.preset-btn{background:var(--inp);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
-.preset-btn:hover,.preset-btn.active{background:rgba(201,163,71,.12);border-color:var(--gold-d);color:var(--gold)}
-.view-toggle{display:flex;background:var(--inp);border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.view-btn{padding:6px 12px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:'Inter',sans-serif;transition:all .15s;letter-spacing:.5px}
-.view-btn.active{background:rgba(201,163,71,.15);color:var(--gold)}
-.btn-refresh{background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:8px;padding:7px 16px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#000;cursor:pointer;transition:opacity .15s;letter-spacing:.5px;margin-left:auto}
+/* ── CONTROLS ── */
+.controls{padding:14px 28px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
+.ctrl-lbl{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.dt{background:var(--inp);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-family:'Inter',sans-serif;font-size:11px;color:var(--text);outline:none;transition:border-color .15s}
+.dt:focus{border-color:var(--gold-d)}
+.pb{background:var(--inp);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:'Inter',sans-serif}
+.pb:hover,.pb.active{background:rgba(201,163,71,.1);border-color:rgba(201,163,71,.4);color:var(--gold)}
+.vt{display:flex;background:var(--inp);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.vb{padding:6px 11px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:'Inter',sans-serif;transition:all .15s}
+.vb.active{background:rgba(201,163,71,.12);color:var(--gold)}
+.nav-grp{display:flex;align-items:center;gap:6px;margin-left:auto}
+.nav-arr{background:var(--inp);border:1px solid var(--border);border-radius:8px;padding:6px 11px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.nav-arr:hover{border-color:var(--gold-d);color:var(--gold)}
+.period-pill{font-size:11px;color:var(--gold);font-weight:600;min-width:130px;text-align:center;background:rgba(201,163,71,.07);border:1px solid rgba(201,163,71,.18);border-radius:8px;padding:6px 12px}
+.btn-refresh{background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:8px;padding:7px 16px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:#000;cursor:pointer;letter-spacing:.5px;transition:opacity .15s}
 .btn-refresh:hover{opacity:.85}
-.ctrl-sep{width:1px;height:24px;background:var(--border);margin:0 4px}
+.sep{width:1px;height:22px;background:var(--border);margin:0 2px}
 
-/* CONTENT */
-.content{flex:1;padding:20px 24px;overflow-y:auto}
+/* ── CONTENT ── */
+.content{flex:1;padding:22px 28px;overflow-y:auto}
 
-/* KPI GRID */
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:border-color .2s}
-.kpi-card:hover{border-color:var(--gold-d)}
-.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .2s}
-.kpi-card:hover::after{opacity:1}
-.kpi-card.gold::after{background:var(--gold)}
-.kpi-card.peak::after{background:var(--peak)}
-.kpi-card.day::after{background:var(--day)}
-.kpi-card.op::after{background:var(--op)}
-.kpi-card.blue::after{background:var(--blue)}
-.kpi-dot{width:8px;height:8px;border-radius:50%;margin-bottom:10px}
-.kpi-dot.gold{background:var(--gold)}
-.kpi-dot.peak{background:var(--peak)}
-.kpi-dot.day{background:var(--day)}
-.kpi-dot.op{background:var(--op)}
-.kpi-dot.blue{background:var(--blue)}
-.kpi-label{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
-.kpi-val{font-size:22px;font-weight:700;color:var(--text);line-height:1;margin-bottom:4px}
-.kpi-val .unit{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
-.kpi-sub{font-size:10px;color:var(--muted)}
+/* ── KPI CARDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kc{border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;cursor:default;transition:transform .2s,box-shadow .2s}
+.kc:hover{transform:translateY(-2px)}
+.kc-gold{background:linear-gradient(135deg,rgba(201,163,71,.12),rgba(201,163,71,.04));border:1px solid rgba(201,163,71,.25);box-shadow:0 4px 24px rgba(201,163,71,.08)}
+.kc-gold:hover{box-shadow:0 8px 32px rgba(201,163,71,.16)}
+.kc-peak{background:linear-gradient(135deg,rgba(224,90,90,.12),rgba(224,90,90,.04));border:1px solid rgba(224,90,90,.25);box-shadow:0 4px 24px rgba(224,90,90,.08)}
+.kc-peak:hover{box-shadow:0 8px 32px rgba(224,90,90,.16)}
+.kc-day{background:linear-gradient(135deg,rgba(201,163,71,.1),rgba(201,163,71,.03));border:1px solid rgba(201,163,71,.2)}
+.kc-op{background:linear-gradient(135deg,rgba(76,175,125,.12),rgba(76,175,125,.04));border:1px solid rgba(76,175,125,.25);box-shadow:0 4px 24px rgba(76,175,125,.08)}
+.kc-op:hover{box-shadow:0 8px 32px rgba(76,175,125,.16)}
+.kc-blue{background:linear-gradient(135deg,rgba(90,158,224,.12),rgba(90,158,224,.04));border:1px solid rgba(90,158,224,.25);box-shadow:0 4px 24px rgba(90,158,224,.08)}
+.kc-glow{position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.15;filter:blur(20px)}
+.kc-gold .kc-glow{background:var(--gold)}
+.kc-peak .kc-glow{background:var(--peak)}
+.kc-op .kc-glow{background:var(--op)}
+.kc-blue .kc-glow{background:var(--blue)}
+.kc-icon{font-size:18px;margin-bottom:10px;opacity:.8}
+.kc-lbl{font-size:9px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
+.kc-val{font-size:24px;font-weight:800;line-height:1;margin-bottom:5px}
+.kc-val .u{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
+.kc-sub{font-size:9px;color:var(--muted)}
+.kc-gold .kc-val{color:var(--gold)}
+.kc-peak .kc-val{color:var(--peak)}
+.kc-day .kc-val{color:var(--day)}
+.kc-op .kc-val{color:var(--op)}
+.kc-blue .kc-val{color:var(--blue)}
 
-/* CHARTS GRID */
-.charts-row{display:grid;gap:12px;margin-bottom:12px}
-.charts-row.r1{grid-template-columns:1fr 1fr 1fr}
-.charts-row.r2{grid-template-columns:2fr 1fr}
-.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
-.chart-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
-.chart-title{font-size:13px;font-weight:600;color:var(--text)}
-.chart-sub{font-size:10px;color:var(--muted);margin-top:3px}
-.chart-wrap{position:relative}
-.chart-wrap canvas{display:block}
+/* ── CHARTS ── */
+.cr{display:grid;gap:14px;margin-bottom:14px}
+.cr2{grid-template-columns:2fr 1fr}
+.cr1{grid-template-columns:1fr}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden}
+.cc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,163,71,.3),transparent)}
+.ch{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.ct{font-size:13px;font-weight:700;color:var(--text)}
+.cs{font-size:10px;color:var(--muted);margin-top:3px}
+.cw{position:relative}
+.leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+.li{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--sub)}
+.ld{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 
-/* LEGEND */
-.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
-.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sub)}
-.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+/* ── UNIT USAGE ── */
+.unit-panel{background:linear-gradient(135deg,var(--card),#0A1020);border:1px solid var(--border2);border-radius:14px;padding:20px;margin-bottom:18px;position:relative;overflow:hidden}
+.unit-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,163,71,.4),transparent)}
+.unit-bar-bg{height:8px;background:var(--inp);border-radius:4px;overflow:hidden;margin-top:8px}
+.unit-bar-fill{height:100%;border-radius:4px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.breaker-tag{background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:10px;color:var(--sub);transition:all .15s}
+.breaker-tag:hover{border-color:rgba(201,163,71,.3);color:var(--gold)}
+.status-badge{font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px}
 
-/* LOADING */
-.loading-overlay{position:fixed;inset:0;background:rgba(8,9,15,.8);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);display:none}
-.loading-box{text-align:center}
-.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+/* ── LOADING ── */
+.ov{position:fixed;inset:0;background:rgba(7,10,19,.85);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(6px);display:none}
+.ob{text-align:center}
+.sp{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-box p{font-size:13px;color:var(--muted)}
+.ob p{font-size:13px;color:var(--muted)}
 
-/* EMPTY STATE */
-.empty{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+/* ── FOOTER ── */
+.footer{text-align:center;padding:14px;font-size:10px;color:#2A3050;border-top:1px solid var(--border);flex-shrink:0}
+.footer strong{color:#5A6080}
 
-/* SCROLLBAR */
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 
-/* RESPONSIVE */
 @media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .main{margin-left:0}
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
-  .charts-row.r1,.charts-row.r2{grid-template-columns:1fr}
-}
-@media(max-width:600px){
-  .controls{padding:10px 12px}
-  .content{padding:12px}
-  .topbar{padding:0 12px}
-  .kpi-grid{grid-template-columns:1fr 1fr}
+  .cr2{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-box">
-    <div class="spinner"></div>
-    <p>Loading energy data...</p>
+<div class="ov" id="ov"><div class="ob"><div class="sp"></div><p>Loading energy data...</p></div></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">Dirisdigiware</div>
+    <div class="tagline">Energy Intelligence Platform</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Monitor</div>
+    <a class="nav-item active" href="dashboard.html"><span class="nav-icon">⚡</span>Dashboard</a>
+    <a class="nav-item" href="production.html"><span class="nav-icon">🏭</span>Production</a>
+    <div class="nav-section">Reports</div>
+    <a class="nav-item" href="#" onclick="alert('Coming soon')"><span class="nav-icon">📄</span>Monthly Report</a>
+    <a class="nav-item" href="#" onclick="alert('Coming soon')"><span class="nav-icon">📊</span>Analytics</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-name" id="userName">—</div>
+      <div class="user-role" id="userRole">Viewer</div>
+      <div class="company-tag" id="companyTag">—</div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Sign Out</button>
   </div>
 </div>
 
-<!-- TOPBAR -->
-<div class="topbar">
-  <div class="brand">
-    <div class="brand-name">Dirisdigiware</div>
-    <div class="brand-sep">|</div>
-    <div class="brand-sub">VENORA LANKA POWER PANELS</div>
-  </div>
-  <div class="topbar-right">
-    <div class="user-badge" id="siteBadge">Site 1</div>
-    <div class="user-badge" id="userBadge">Admin</div>
-    <button class="btn-sm" onclick="logout()">Sign Out</button>
-  </div>
-</div>
+<!-- MAIN -->
+<div class="main">
 
-<!-- CONTROLS -->
-<div class="controls">
-  <div class="ctrl-group">
-    <span class="ctrl-label">From</span>
-    <input type="date" class="date-input" id="fromDate">
-  </div>
-  <div class="ctrl-group">
-    <span class="ctrl-label">To</span>
-    <input type="date" class="date-input" id="toDate">
-  </div>
-
-  <div class="ctrl-sep"></div>
-
-  <div class="ctrl-group" style="gap:4px">
-    <button class="preset-btn" onclick="setPreset('today')">Today</button>
-    <button class="preset-btn" onclick="setPreset('week')">This Week</button>
-    <button class="preset-btn active" onclick="setPreset('month')" id="presetMonth">This Month</button>
-    <button class="preset-btn" onclick="setPreset('last30')">Last 30 Days</button>
-    <button class="preset-btn" onclick="setPreset('last3m')">Last 3 Months</button>
-  </div>
-
-  <div class="ctrl-sep"></div>
-
-  <div class="ctrl-group">
-    <span class="ctrl-label">View</span>
-    <div class="view-toggle">
-      <button class="view-btn" onclick="setView('hourly')" id="v-hourly">Hourly</button>
-      <button class="view-btn active" onclick="setView('daily')" id="v-daily">Daily</button>
-      <button class="view-btn" onclick="setView('weekly')" id="v-weekly">Weekly</button>
-      <button class="view-btn" onclick="setView('monthly')" id="v-monthly">Monthly</button>
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="page-title">Energy Dashboard</div>
+      <div class="page-sub" id="pageSubtitle">Loading...</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-dot"></div>
+      <span class="live-label">Live</span>
     </div>
   </div>
 
-  <button class="btn-refresh" onclick="loadData()">↻ Load Data</button>
-</div>
-
-<!-- CONTENT -->
-<div class="content">
-
-  <!-- KPI ROW 1 -->
-  <div class="kpi-grid" id="kpiGrid">
-    <div class="kpi-card gold">
-      <div class="kpi-dot gold"></div>
-      <div class="kpi-label">Total Consumption</div>
-      <div class="kpi-val" id="k-kwh">—<span class="unit">kWh</span></div>
-      <div class="kpi-sub">Selected period</div>
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="ctrl-lbl">From</span>
+      <input type="date" class="dt" id="fromDate">
     </div>
-    <div class="kpi-card gold">
-      <div class="kpi-dot gold"></div>
-      <div class="kpi-label">Total Cost</div>
-      <div class="kpi-val" id="k-cost">—</div>
-      <div class="kpi-sub">LKR for period</div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="ctrl-lbl">To</span>
+      <input type="date" class="dt" id="toDate">
     </div>
-    <div class="kpi-card blue">
-      <div class="kpi-dot blue"></div>
-      <div class="kpi-label">Max Demand</div>
-      <div class="kpi-val" id="k-kva">—<span class="unit">kVA</span></div>
-      <div class="kpi-sub" id="k-kva-sub">Peak recorded</div>
+    <div class="sep"></div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap">
+      <button class="pb" onclick="setPreset('today',this)">Today</button>
+      <button class="pb" onclick="setPreset('week',this)">This Week</button>
+      <button class="pb active" onclick="setPreset('month',this)">This Month</button>
+      <button class="pb" onclick="setPreset('last30',this)">Last 30 Days</button>
+      <button class="pb" onclick="setPreset('last3m',this)">Last 3 Months</button>
     </div>
-    <div class="kpi-card gold">
-      <div class="kpi-dot gold"></div>
-      <div class="kpi-label">Average Tariff</div>
-      <div class="kpi-val" id="k-tariff">—<span class="unit">LKR/kWh</span></div>
-      <div class="kpi-sub">Blended rate</div>
+    <div class="sep"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="ctrl-lbl">View</span>
+      <div class="vt">
+        <button class="vb" onclick="setView('hourly',this)">Hourly</button>
+        <button class="vb active" onclick="setView('daily',this)">Daily</button>
+        <button class="vb" onclick="setView('weekly',this)">Weekly</button>
+        <button class="vb" onclick="setView('monthly',this)">Monthly</button>
+      </div>
     </div>
-    <div class="kpi-card peak">
-      <div class="kpi-dot peak"></div>
-      <div class="kpi-label">Peak Cost</div>
-      <div class="kpi-val" id="k-peak">—</div>
-      <div class="kpi-sub">17:00 – 22:00 · LKR 39/kWh</div>
-    </div>
-    <div class="kpi-card day">
-      <div class="kpi-dot day"></div>
-      <div class="kpi-label">Day Cost</div>
-      <div class="kpi-val" id="k-day">—</div>
-      <div class="kpi-sub">09:00 – 17:00 · LKR 19/kWh</div>
-    </div>
-    <div class="kpi-card op">
-      <div class="kpi-dot op"></div>
-      <div class="kpi-label">Off-Peak Cost</div>
-      <div class="kpi-val" id="k-op">—</div>
-      <div class="kpi-sub">22:00 – 09:00 · LKR 16.50/kWh</div>
-    </div>
-    <div class="kpi-card op">
-      <div class="kpi-dot op"></div>
-      <div class="kpi-label">Off-Peak Savings</div>
-      <div class="kpi-val" id="k-save">—</div>
-      <div class="kpi-sub">vs if all usage was at peak rate</div>
+    <div class="nav-grp">
+      <button class="nav-arr" onclick="navigate(-1)">◀</button>
+      <div class="period-pill" id="periodLbl">—</div>
+      <button class="nav-arr" onclick="navigate(1)">▶</button>
+      <button class="btn-refresh" onclick="loadData()">↻ Refresh</button>
     </div>
   </div>
 
-  <!-- COST OVER TIME + PIE CHARTS -->
-  <div class="charts-row r2">
-    <div class="chart-card">
-      <div class="chart-hd">
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- UNIT USAGE -->
+    <div class="unit-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <div>
-          <div class="chart-title">Cost Over Time</div>
-          <div class="chart-sub">LKR breakdown by Peak / Day / Off-Peak</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">Monitoring Units</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Breakers and circuits registered for this site</div>
+        </div>
+        <div id="unitStatusBadge" class="status-badge" style="background:rgba(76,175,125,.12);color:#4CAF7D;border:1px solid rgba(76,175,125,.25)">● OK</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px">
+        <div>
+          <div style="font-size:42px;font-weight:800;color:var(--gold);line-height:1" id="unitCount">—</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px" id="unitMax">of — units</div>
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:10px;color:var(--muted)" id="unitFree">— available</span>
+            <span style="font-size:10px;font-weight:600;color:var(--gold)" id="unitPct">0%</span>
+          </div>
+          <div class="unit-bar-bg"><div id="unitBar" class="unit-bar-fill" style="width:0%;background:var(--op)"></div></div>
+          <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px" id="breakerTags">
+            <span style="font-size:10px;color:var(--muted)">Loading...</span>
+          </div>
         </div>
       </div>
-      <div class="chart-wrap" style="height:220px">
-        <canvas id="costChart"></canvas>
+      <div style="margin-top:12px;font-size:10px;color:var(--muted)">Need more units? Contact <strong style="color:var(--gold-d)">Venora Lanka Power Panels (Pvt) Ltd</strong></div>
+    </div>
+
+    <!-- KPI ROW 1 -->
+    <div class="kpi-grid">
+      <div class="kc kc-gold">
+        <div class="kc-glow"></div>
+        <div class="kc-icon">⚡</div>
+        <div class="kc-lbl">Total Consumption</div>
+        <div class="kc-val" id="k-kwh">—<span class="u">kWh</span></div>
+        <div class="kc-sub" id="k-period">Selected period</div>
       </div>
-      <div class="legend">
-        <div class="leg-item"><div class="leg-dot" style="background:var(--peak)"></div>Peak</div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--day)"></div>Day</div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--op)"></div>Off-Peak</div>
+      <div class="kc kc-gold">
+        <div class="kc-glow"></div>
+        <div class="kc-icon">💰</div>
+        <div class="kc-lbl">Total Cost</div>
+        <div class="kc-val" id="k-cost">—</div>
+        <div class="kc-sub">LKR for period</div>
+      </div>
+      <div class="kc kc-blue">
+        <div class="kc-glow"></div>
+        <div class="kc-icon">📈</div>
+        <div class="kc-lbl">Max Demand</div>
+        <div class="kc-val" id="k-kva">—<span class="u">kVA</span></div>
+        <div class="kc-sub">Peak recorded</div>
+      </div>
+      <div class="kc kc-gold">
+        <div class="kc-glow"></div>
+        <div class="kc-icon">📊</div>
+        <div class="kc-lbl">Average Tariff</div>
+        <div class="kc-val" id="k-tariff">—<span class="u">LKR/kWh</span></div>
+        <div class="kc-sub">Blended rate</div>
       </div>
     </div>
 
-    <div class="chart-card">
-      <div class="chart-hd">
-        <div>
-          <div class="chart-title">Usage Distribution</div>
-          <div class="chart-sub">kWh by time-of-use period</div>
-        </div>
+    <!-- KPI ROW 2 -->
+    <div class="kpi-grid" style="margin-bottom:18px">
+      <div class="kc kc-peak">
+        <div class="kc-glow"></div>
+        <div class="kc-icon">🔴</div>
+        <div class="kc-lbl">Peak Cost</div>
+        <div class="kc-val" id="k-peak">—</div>
+        <div class="kc-sub">17:00–22:00 · LKR 39/kWh</div>
       </div>
-      <div class="chart-wrap" style="height:180px">
-        <canvas id="usagePie"></canvas>
+      <div class="kc kc-day">
+        <div class="kc-icon">🟡</div>
+        <div class="kc-lbl">Day Cost</div>
+        <div class="kc-val" id="k-day">—</div>
+        <div class="kc-sub">09:00–17:00 · LKR 19/kWh</div>
+      </div>
+      <div class="kc kc-op">
+        <div class="kc-glow"></div>
+        <div class="kc-icon">🟢</div>
+        <div class="kc-lbl">Off-Peak Cost</div>
+        <div class="kc-val" id="k-op">—</div>
+        <div class="kc-sub">22:00–09:00 · LKR 16.50/kWh</div>
+      </div>
+      <div class="kc kc-op">
+        <div class="kc-glow"></div>
+        <div class="kc-icon">💚</div>
+        <div class="kc-lbl">Off-Peak Savings</div>
+        <div class="kc-val" id="k-save">—</div>
+        <div class="kc-sub">vs all-peak rate</div>
       </div>
     </div>
+
+    <!-- COST CHART + PIE -->
+    <div class="cr cr2">
+      <div class="cc">
+        <div class="ch">
+          <div><div class="ct">Cost by Time Period</div><div class="cs">LKR — Peak · Day · Off-Peak per period</div></div>
+        </div>
+        <div class="cw" style="height:220px"><canvas id="costChart"></canvas></div>
+        <div class="leg">
+          <div class="li"><div class="ld" style="background:var(--peak)"></div>Peak (17:00–22:00)</div>
+          <div class="li"><div class="ld" style="background:var(--day)"></div>Day (09:00–17:00)</div>
+          <div class="li"><div class="ld" style="background:var(--op)"></div>Off-Peak (22:00–09:00)</div>
+        </div>
+      </div>
+      <div class="cc">
+        <div class="ch"><div><div class="ct">Cost Distribution</div><div class="cs">LKR split by tariff period</div></div></div>
+        <div class="cw" style="height:190px"><canvas id="costPie"></canvas></div>
+      </div>
+    </div>
+
+    <!-- USAGE CHART + PIE -->
+    <div class="cr cr2">
+      <div class="cc">
+        <div class="ch">
+          <div><div class="ct">Usage by Time Period</div><div class="cs">kWh — Peak · Day · Off-Peak per period</div></div>
+        </div>
+        <div class="cw" style="height:220px"><canvas id="usageChart"></canvas></div>
+        <div class="leg">
+          <div class="li"><div class="ld" style="background:var(--peak)"></div>Peak (17:00–22:00)</div>
+          <div class="li"><div class="ld" style="background:var(--day)"></div>Day (09:00–17:00)</div>
+          <div class="li"><div class="ld" style="background:var(--op)"></div>Off-Peak (22:00–09:00)</div>
+        </div>
+      </div>
+      <div class="cc">
+        <div class="ch"><div><div class="ct">Usage Distribution</div><div class="cs">kWh split by tariff period</div></div></div>
+        <div class="cw" style="height:190px"><canvas id="usagePie"></canvas></div>
+      </div>
+    </div>
+
+    <!-- kVA CHART -->
+    <div class="cr cr1">
+      <div class="cc">
+        <div class="ch">
+          <div><div class="ct">Maximum Demand (kVA)</div><div class="cs">Peak demand — Contract limit: <span id="climit" style="color:var(--peak)">63</span> kVA</div></div>
+        </div>
+        <div class="cw" style="height:160px"><canvas id="kvaChart"></canvas></div>
+      </div>
+    </div>
+
   </div>
 
-  <!-- USAGE OVER TIME + COST PIE -->
-  <div class="charts-row r2">
-    <div class="chart-card">
-      <div class="chart-hd">
-        <div>
-          <div class="chart-title">Electricity Usage Over Time</div>
-          <div class="chart-sub">kWh / kW breakdown by period</div>
-        </div>
-      </div>
-      <div class="chart-wrap" style="height:220px">
-        <canvas id="usageChart"></canvas>
-      </div>
-      <div class="legend">
-        <div class="leg-item"><div class="leg-dot" style="background:var(--peak)"></div>Peak</div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--day)"></div>Day</div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--op)"></div>Off-Peak</div>
-      </div>
-    </div>
-
-    <div class="chart-card">
-      <div class="chart-hd">
-        <div>
-          <div class="chart-title">Cost Distribution</div>
-          <div class="chart-sub">LKR cost by time-of-use period</div>
-        </div>
-      </div>
-      <div class="chart-wrap" style="height:180px">
-        <canvas id="costPie"></canvas>
-      </div>
-    </div>
+  <div class="footer">
+    Dirisdigiware Energy Intelligence Platform &nbsp;·&nbsp; Developed by <strong>Thirasha Bandara</strong> &nbsp;·&nbsp; Venora Lanka Power Panels (Pvt) Ltd &nbsp;·&nbsp; &copy; 2026 All Rights Reserved
   </div>
-
-  <!-- DEMAND (kVA) CHART -->
-  <div class="charts-row" style="grid-template-columns:1fr;margin-bottom:12px">
-    <div class="chart-card">
-      <div class="chart-hd">
-        <div>
-          <div class="chart-title">Maximum Demand (kVA)</div>
-          <div class="chart-sub">Peak demand recorded per period — Contract limit: <span id="contractLimit">63</span> kVA</div>
-        </div>
-      </div>
-      <div class="chart-wrap" style="height:160px">
-        <canvas id="kvaChart"></canvas>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────────────────
-const API_URL = 'https://venora-cloud-server-production.up.railway.app';
-const API_KEY = 'venora-super-secret-key-2025-change-this';
+const API_URL='https://venora-cloud-server-production.up.railway.app';
+const API_KEY='venora-super-secret-key-2025-change-this';
+let user=null,charts={},view='daily';
 
-let user = null;
-let charts = {};
-let currentView = 'daily';
-
-// ── AUTH ──────────────────────────────────────────────────────────────────────
-function checkAuth() {
-  const s = sessionStorage.getItem('user');
-  if (!s) { window.location.href = 'login.html'; return false; }
-  user = JSON.parse(s);
-  document.getElementById('userBadge').textContent = user.name;
-  document.getElementById('siteBadge').textContent = 'Site ' + user.site_id;
+function checkAuth(){
+  const s=sessionStorage.getItem('user');
+  if(!s){window.location.href='login.html';return false;}
+  user=JSON.parse(s);
+  document.getElementById('userName').textContent=user.name||user.username;
+  document.getElementById('userRole').textContent=user.role||'Viewer';
+  document.getElementById('companyTag').textContent=user.company||user.site_name||'Site '+user.site_id;
   return true;
 }
-function logout() { sessionStorage.removeItem('user'); window.location.href = 'login.html'; }
+function logout(){sessionStorage.removeItem('user');window.location.href='login.html';}
+function fd(d){return d.toISOString().split('T')[0];}
 
-// ── DATE HELPERS ──────────────────────────────────────────────────────────────
-function fmtDate(d) { return d.toISOString().split('T')[0]; }
-
-function setPreset(p) {
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  const now = new Date();
-  let from, to = fmtDate(now);
-  if (p === 'today') { from = to; }
-  else if (p === 'week') {
-    const d = new Date(now); d.setDate(d.getDate() - d.getDay());
-    from = fmtDate(d);
-  } else if (p === 'month') {
-    from = fmtDate(new Date(now.getFullYear(), now.getMonth(), 1));
-  } else if (p === 'last30') {
-    const d = new Date(now); d.setDate(d.getDate() - 30);
-    from = fmtDate(d);
-  } else if (p === 'last3m') {
-    const d = new Date(now); d.setMonth(d.getMonth() - 3);
-    from = fmtDate(d);
-  }
-  document.getElementById('fromDate').value = from;
-  document.getElementById('toDate').value = to;
+function updatePeriodLabel(){
+  const from=document.getElementById('fromDate').value;
+  const to=document.getElementById('toDate').value;
+  if(!from)return;
+  const f=new Date(from),t=new Date(to);
+  const label=view==='monthly'
+    ?f.toLocaleDateString('en-GB',{month:'long',year:'numeric'})
+    :f.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' – '+t.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('periodLbl').textContent=label;
+  document.getElementById('k-period').textContent=label;
+  document.getElementById('pageSubtitle').textContent=label;
 }
 
-function setView(v) {
-  currentView = v;
-  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('v-' + v).classList.add('active');
+function setPreset(p,el){
+  document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+  const n=new Date();let from,to=fd(n);
+  if(p==='today'){from=to;}
+  else if(p==='week'){const d=new Date(n);d.setDate(d.getDate()-d.getDay());from=fd(d);}
+  else if(p==='month'){from=fd(new Date(n.getFullYear(),n.getMonth(),1));}
+  else if(p==='last30'){const d=new Date(n);d.setDate(d.getDate()-30);from=fd(d);}
+  else if(p==='last3m'){const d=new Date(n);d.setMonth(d.getMonth()-3);from=fd(d);}
+  document.getElementById('fromDate').value=from;document.getElementById('toDate').value=to;
+  updatePeriodLabel();loadData();
+}
+function setView(v,el){
+  view=v;document.querySelectorAll('.vb').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+  updatePeriodLabel();loadData();
+}
+function navigate(dir){
+  const from=new Date(document.getElementById('fromDate').value);
+  const to=new Date(document.getElementById('toDate').value);
+  if(view==='hourly'||view==='daily'){from.setDate(from.getDate()+dir);to.setDate(to.getDate()+dir);}
+  else if(view==='weekly'){from.setDate(from.getDate()+dir*7);to.setDate(to.getDate()+dir*7);}
+  else if(view==='monthly'){from.setMonth(from.getMonth()+dir);to.setMonth(to.getMonth()+dir);}
+  const today=new Date();if(to>today)to.setTime(today.getTime());
+  document.getElementById('fromDate').value=fd(from);document.getElementById('toDate').value=fd(to);
+  document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));
+  updatePeriodLabel();loadData();
 }
 
-// ── FORMAT NUMBERS ────────────────────────────────────────────────────────────
-function fNum(n, dec=1) {
-  if (n === null || n === undefined || isNaN(n)) return '—';
-  n = parseFloat(n);
-  if (n >= 1000000) return (n/1000000).toFixed(dec) + 'M';
-  if (n >= 1000)    return (n/1000).toFixed(dec) + 'K';
-  return n.toFixed(dec);
+function fN(n,d=1){
+  if(n===null||n===undefined||isNaN(n))return'—';n=parseFloat(n);
+  if(n>=1000000)return(n/1000000).toFixed(d)+'M';if(n>=1000)return(n/1000).toFixed(d)+'K';return n.toFixed(d);
 }
-function fLKR(n) { return 'LKR ' + fNum(n, 0); }
+function fL(n){return'LKR '+fN(n,0);}
+function fP(p,v){
+  const d=new Date(p);
+  if(v==='hourly')return d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  if(v==='daily')return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  if(v==='weekly')return 'W/E '+d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  if(v==='monthly')return d.toLocaleDateString('en-GB',{month:'short',year:'numeric'});return p;
+}
 
-// ── CHART CONFIG ──────────────────────────────────────────────────────────────
-const chartDefaults = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      backgroundColor: '#10141F',
-      borderColor: '#1E2840',
-      borderWidth: 1,
-      titleColor: '#C9A347',
-      bodyColor: '#F0EDE6',
-      padding: 10
-    }
-  },
-  scales: {
-    x: { grid: { color: 'rgba(30,40,64,0.5)' }, ticks: { color: '#6B7191', font: { size: 10 }, maxTicksLimit: 10 } },
-    y: { grid: { color: 'rgba(30,40,64,0.5)' }, ticks: { color: '#6B7191', font: { size: 10 } } }
-  }
+const TD={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#0D1220',borderColor:'#1C2A42',borderWidth:1,titleColor:'#C9A347',bodyColor:'#F0EDE6',padding:12,cornerRadius:8}},
+  scales:{x:{grid:{color:'rgba(28,42,66,.6)'},ticks:{color:'#6B7191',font:{size:10},maxTicksLimit:10}},y:{grid:{color:'rgba(28,42,66,.6)'},ticks:{color:'#6B7191',font:{size:10}}}}
 };
 
-function makeBarChart(id, labels, datasets, yFmt) {
-  if (charts[id]) charts[id].destroy();
-  const ctx = document.getElementById(id).getContext('2d');
-  charts[id] = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets },
-    options: {
-      ...chartDefaults,
-      plugins: {
-        ...chartDefaults.plugins,
-        tooltip: {
-          ...chartDefaults.plugins.tooltip,
-          callbacks: { label: c => ' ' + (yFmt ? yFmt(c.raw) : c.raw) }
-        }
-      },
-      scales: {
-        ...chartDefaults.scales,
-        x: { ...chartDefaults.scales.x, stacked: true },
-        y: {
-          ...chartDefaults.scales.y,
-          stacked: true,
-          ticks: { ...chartDefaults.scales.y.ticks, callback: v => yFmt ? yFmt(v) : v }
-        }
-      }
-    }
-  });
+function mkGroupedBar(id,labels,datasets,yf){
+  if(charts[id])charts[id].destroy();
+  const ctx=document.getElementById(id).getContext('2d');
+  charts[id]=new Chart(ctx,{type:'bar',data:{labels,datasets},options:{...TD,
+    plugins:{...TD.plugins,legend:{display:true,position:'top',labels:{color:'#8B90B0',font:{size:10},padding:14,boxWidth:8,usePointStyle:true}},
+      tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+c.dataset.label+': '+(yf?yf(c.raw):fN(c.raw))}}},
+    scales:{x:{...TD.scales.x,stacked:false},y:{...TD.scales.y,stacked:false,ticks:{...TD.scales.y.ticks,callback:v=>yf?yf(v):fN(v)}}}}});
+}
+function mkPie(id,labels,data,colors){
+  if(charts[id])charts[id].destroy();
+  const ctx=document.getElementById(id).getContext('2d');
+  charts[id]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#0D1220',borderWidth:3}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+      plugins:{legend:{position:'bottom',labels:{color:'#8B90B0',font:{size:10},padding:10,boxWidth:8}},
+        tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+fN(c.raw,1)+' ('+((c.raw/c.dataset.data.reduce((a,b)=>a+b,0))*100).toFixed(1)+'%)'}}}}}); 
+}
+function mkLine(id,labels,datasets){
+  if(charts[id])charts[id].destroy();
+  const ctx=document.getElementById(id).getContext('2d');
+  charts[id]=new Chart(ctx,{type:'line',data:{labels,datasets},options:{...TD,
+    plugins:{...TD.plugins,tooltip:{...TD.plugins.tooltip,callbacks:{label:c=>' '+fN(c.raw,2)+' kVA'}}},
+    scales:{...TD.scales,y:{...TD.scales.y,ticks:{...TD.scales.y.ticks,callback:v=>fN(v,1)}}}}});
 }
 
-function makePieChart(id, labels, data, colors) {
-  if (charts[id]) charts[id].destroy();
-  const ctx = document.getElementById(id).getContext('2d');
-  charts[id] = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{ data, backgroundColor: colors, borderColor: '#10141F', borderWidth: 3 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '62%',
-      plugins: {
-        legend: { position: 'bottom', labels: { color: '#9499B5', font: { size: 11 }, padding: 10, boxWidth: 10 } },
-        tooltip: {
-          backgroundColor: '#10141F', borderColor: '#1E2840', borderWidth: 1,
-          titleColor: '#C9A347', bodyColor: '#F0EDE6',
-          callbacks: { label: c => ' ' + fNum(c.raw, 1) + ' (' + ((c.raw / c.dataset.data.reduce((a,b)=>a+b,0))*100).toFixed(1) + '%)' }
-        }
-      }
-    }
-  });
+function updateUnitPanel(d){
+  if(!d)return;
+  const used=d.units_used||0,max=d.max_units||10,pct=d.percentage||0,free=d.units_free||0;
+  document.getElementById('unitCount').textContent=used;
+  document.getElementById('unitMax').textContent='of '+max+' units';
+  document.getElementById('unitFree').textContent=free+' unit'+(free!==1?'s':'')+' available';
+  document.getElementById('unitPct').textContent=pct+'%';
+  const bar=document.getElementById('unitBar'),badge=document.getElementById('unitStatusBadge');
+  bar.style.width=pct+'%';
+  if(pct>=90){bar.style.background='#E05A5A';badge.style.background='rgba(224,90,90,.12)';badge.style.color='#E05A5A';badge.style.border='1px solid rgba(224,90,90,.25)';badge.textContent='● Limit Reached';}
+  else if(pct>=70){bar.style.background='#C9A347';badge.style.background='rgba(201,163,71,.12)';badge.style.color='#C9A347';badge.style.border='1px solid rgba(201,163,71,.25)';badge.textContent='● Near Limit';}
+  else{bar.style.background='var(--op)';badge.style.background='rgba(76,175,125,.12)';badge.style.color='#4CAF7D';badge.style.border='1px solid rgba(76,175,125,.25)';badge.textContent='● OK';}
+  const c=document.getElementById('breakerTags');
+  c.innerHTML=d.breaker_names&&d.breaker_names.length>0
+    ?d.breaker_names.map((n,i)=>'<span class="breaker-tag">'+(i+1)+'. '+n+'</span>').join('')
+    :'<span style="font-size:10px;color:var(--muted)">No breakers registered yet</span>';
 }
 
-function makeLineChart(id, labels, datasets, yFmt) {
-  if (charts[id]) charts[id].destroy();
-  const ctx = document.getElementById(id).getContext('2d');
-  charts[id] = new Chart(ctx, {
-    type: 'line',
-    data: { labels, datasets },
-    options: {
-      ...chartDefaults,
-      plugins: {
-        ...chartDefaults.plugins,
-        tooltip: {
-          ...chartDefaults.plugins.tooltip,
-          callbacks: { label: c => ' ' + (yFmt ? yFmt(c.raw) : fNum(c.raw)) + ' kVA' }
-        }
-      },
-      scales: {
-        ...chartDefaults.scales,
-        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => fNum(v) } }
-      }
-    }
-  });
+function updateKPIs(k){
+  document.getElementById('k-kwh').innerHTML=fN(k.total_kwh,2)+'<span class="u">kWh</span>';
+  document.getElementById('k-cost').textContent=fL(k.total_cost);
+  document.getElementById('k-kva').innerHTML=fN(k.max_kva,2)+'<span class="u">kVA</span>';
+  document.getElementById('k-tariff').innerHTML=fN(k.avg_tariff,2)+'<span class="u">LKR/kWh</span>';
+  document.getElementById('k-peak').textContent=fL(k.peak_cost);
+  document.getElementById('k-day').textContent=fL(k.day_cost);
+  document.getElementById('k-op').textContent=fL(k.offpeak_cost);
+  document.getElementById('k-save').textContent=fL(k.offpeak_savings);
 }
 
-// ── FORMAT PERIOD LABEL ───────────────────────────────────────────────────────
-function fPeriod(p, view) {
-  const d = new Date(p);
-  if (view === 'hourly')  return d.toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-  if (view === 'daily')   return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
-  if (view === 'weekly')  return 'W/E ' + d.toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
-  if (view === 'monthly') return d.toLocaleDateString('en-GB', { month:'short', year:'numeric' });
-  return p;
+function updateCharts(ts,tou){
+  if(!ts||!ts.length)return;
+  const labels=ts.map(r=>fP(r.period,view));
+  const col=['#E05A5A','#C9A347','#4CAF7D'];
+  mkGroupedBar('costChart',labels,[
+    {label:'Peak',    data:ts.map(r=>r.peak_cost),   backgroundColor:'rgba(224,90,90,.75)',borderRadius:4},
+    {label:'Day',     data:ts.map(r=>r.day_cost),    backgroundColor:'rgba(201,163,71,.75)',borderRadius:4},
+    {label:'Off-Peak',data:ts.map(r=>r.offpeak_cost),backgroundColor:'rgba(76,175,125,.75)',borderRadius:4},
+  ],v=>'LKR '+fN(v,0));
+  mkGroupedBar('usageChart',labels,[
+    {label:'Peak',    data:ts.map(r=>r.peak_kwh),   backgroundColor:'rgba(224,90,90,.75)',borderRadius:4},
+    {label:'Day',     data:ts.map(r=>r.day_kwh),    backgroundColor:'rgba(201,163,71,.75)',borderRadius:4},
+    {label:'Off-Peak',data:ts.map(r=>r.offpeak_kwh),backgroundColor:'rgba(76,175,125,.75)',borderRadius:4},
+  ],v=>fN(v,1)+' kWh');
+  mkLine('kvaChart',labels,[{label:'Max kVA',data:ts.map(r=>r.max_kva),borderColor:'#5A9EE0',backgroundColor:'rgba(90,158,224,.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#5A9EE0',fill:true,tension:.4}]);
+  if(tou&&tou.length){
+    const tlbl=tou.map(t=>t.period);
+    mkPie('costPie', tlbl,tou.map(t=>t.cost),col);
+    mkPie('usagePie',tlbl,tou.map(t=>t.kwh), col);
+  }
 }
 
-// ── LOAD DATA ─────────────────────────────────────────────────────────────────
-async function loadData() {
-  if (!checkAuth()) return;
-
-  const from = document.getElementById('fromDate').value;
-  const to   = document.getElementById('toDate').value;
-
-  if (!from || !to) { alert('Please select a date range'); return; }
-
-  document.getElementById('loadingOverlay').style.display = 'flex';
-
-  try {
-    const resp = await fetch(
-      `${API_URL}/api/analytics/dashboard?site_id=${user.site_id}&from=${from}&to=${to}&group_by=${currentView}`,
-      { headers: { 'x-api-key': API_KEY } }
-    );
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-
+async function loadData(){
+  if(!checkAuth())return;
+  const from=document.getElementById('fromDate').value;
+  const to=document.getElementById('toDate').value;
+  if(!from||!to){alert('Please select a date range');return;}
+  document.getElementById('ov').style.display='flex';
+  try{
+    const[dataResp,unitResp]=await Promise.all([
+      fetch(`${API_URL}/api/analytics/dashboard?site_id=${user.site_id}&from=${from}&to=${to}&group_by=${view}`,{headers:{'x-api-key':API_KEY}}),
+      fetch(`${API_URL}/api/analytics/unit-usage?site_id=${user.site_id}`,{headers:{'x-api-key':API_KEY}})
+    ]);
+    const data=await dataResp.json();
+    const unitData=await unitResp.json();
+    if(data.error)throw new Error(data.error);
+    updateUnitPanel(unitData);
     updateKPIs(data.kpis);
-    updateCharts(data.time_series, data.tou_breakdown, data.tariff);
-
-    if (data.tariff && data.tariff.contract_demand_kva) {
-      document.getElementById('contractLimit').textContent = data.tariff.contract_demand_kva;
-    }
-
-  } catch (err) {
-    console.error(err);
-    alert('Error loading data: ' + err.message);
-  } finally {
-    document.getElementById('loadingOverlay').style.display = 'none';
-  }
+    updateCharts(data.time_series,data.tou_breakdown);
+    if(data.tariff&&data.tariff.contract_demand_kva)document.getElementById('climit').textContent=data.tariff.contract_demand_kva;
+  }catch(err){console.error(err);alert('Error: '+err.message);}
+  finally{document.getElementById('ov').style.display='none';}
 }
 
-// ── UPDATE KPIs ───────────────────────────────────────────────────────────────
-function updateKPIs(k) {
-  document.getElementById('k-kwh').innerHTML   = fNum(k.total_kwh, 2) + '<span class="unit">kWh</span>';
-  document.getElementById('k-cost').textContent = fLKR(k.total_cost);
-  document.getElementById('k-kva').innerHTML   = fNum(k.max_kva, 2) + '<span class="unit">kVA</span>';
-  document.getElementById('k-tariff').innerHTML = fNum(k.avg_tariff, 2) + '<span class="unit">LKR/kWh</span>';
-  document.getElementById('k-peak').textContent = fLKR(k.peak_cost);
-  document.getElementById('k-day').textContent  = fLKR(k.day_cost);
-  document.getElementById('k-op').textContent   = fLKR(k.offpeak_cost);
-  document.getElementById('k-save').textContent = fLKR(k.offpeak_savings);
-}
-
-// ── UPDATE CHARTS ─────────────────────────────────────────────────────────────
-function updateCharts(ts, tou, tariff) {
-  if (!ts || !ts.length) return;
-
-  const labels = ts.map(r => fPeriod(r.period, currentView));
-
-  // Cost stacked bar
-  makeBarChart('costChart', labels, [
-    { label:'Peak',     data: ts.map(r=>r.peak_cost),    backgroundColor:'rgba(224,90,90,0.8)' },
-    { label:'Day',      data: ts.map(r=>r.day_cost),     backgroundColor:'rgba(201,163,71,0.8)' },
-    { label:'Off-Peak', data: ts.map(r=>r.offpeak_cost), backgroundColor:'rgba(76,175,125,0.8)' },
-  ], v => 'LKR ' + fNum(v,0));
-
-  // Usage stacked bar
-  makeBarChart('usageChart', labels, [
-    { label:'Peak',     data: ts.map(r=>r.peak_kwh),    backgroundColor:'rgba(224,90,90,0.8)' },
-    { label:'Day',      data: ts.map(r=>r.day_kwh),     backgroundColor:'rgba(201,163,71,0.8)' },
-    { label:'Off-Peak', data: ts.map(r=>r.offpeak_kwh), backgroundColor:'rgba(76,175,125,0.8)' },
-  ], v => fNum(v,1) + ' kWh');
-
-  // kVA line
-  makeLineChart('kvaChart', labels, [{
-    label: 'Max kVA',
-    data: ts.map(r => r.max_kva),
-    borderColor: '#5A9EE0',
-    backgroundColor: 'rgba(90,158,224,0.1)',
-    borderWidth: 2,
-    pointRadius: 2,
-    fill: true,
-    tension: 0.3
-  }]);
-
-  // Pie charts from TOU breakdown
-  if (tou && tou.length) {
-    const touLabels = tou.map(t => t.period + ' (' + t.hours + ')');
-    const colors    = ['#E05A5A','#C9A347','#4CAF7D'];
-
-    makePieChart('usagePie', touLabels, tou.map(t => t.kwh),  colors);
-    makePieChart('costPie',  touLabels, tou.map(t => t.cost), colors);
-  }
-}
-
-// ── INIT ──────────────────────────────────────────────────────────────────────
-if (checkAuth()) {
-  // Set default date range to this month
-  const now = new Date();
-  document.getElementById('fromDate').value = fmtDate(new Date(now.getFullYear(), now.getMonth(), 1));
-  document.getElementById('toDate').value   = fmtDate(now);
-  loadData();
+if(checkAuth()){
+  const n=new Date();
+  document.getElementById('fromDate').value=fd(new Date(n.getFullYear(),n.getMonth(),1));
+  document.getElementById('toDate').value=fd(n);
+  updatePeriodLabel();loadData();
 }
 </script>
 </body>
