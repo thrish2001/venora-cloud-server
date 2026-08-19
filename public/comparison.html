@@ -1,10 +1,35 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Breaker Comparison — Dirisdigiware</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<title>Breaker Comparison â€” Dirisdigiware</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">let rankData=null;
+function openRanking(){if(rankData)buildRanking(rankData);document.getElementById('rankOverlay').classList.add('open');}
+function closeRanking(){document.getElementById('rankOverlay').classList.remove('open');}
+function buildRanking(data){
+  const{breaker_totals,from,to}=data;
+  const TARGET=['250A BREAKER','2T BOILER & A_C','DBPP','DBPRO1','DBPRO2','DBRM','MACHINE 38_43.1_43.2_43.3','MACHINE 40'];
+  let entries=Object.entries(breaker_totals).filter(([b,v])=>v.kwh>0&&(TARGET.includes(b)||TARGET.length===0)).sort((a,b)=>b[1].kwh-a[1].kwh);
+  if(!entries.length){document.getElementById('rankList').innerHTML='<div style="text-align:center;padding:30px;color:#5A6488">No data for selected period</div>';return;}
+  const totalKwh=entries.reduce((s,[,v])=>s+v.kwh,0);
+  const maxKwh=entries[0][1].kwh;
+  const top33=maxKwh*0.66,top66=maxKwh*0.33;
+  document.getElementById('rankSub').textContent=entries.length+' breakers ranked from '+from+' to '+to;
+  document.getElementById('rankSummary').innerHTML='<div class="rs"><div class="rs-val" style="color:#E05555">'+entries.filter(([,v])=>v.kwh>=top33).length+'</div><div class="rs-lbl">High</div></div><div class="rs"><div class="rs-val" style="color:#E8924F">'+entries.filter(([,v])=>v.kwh>=top66&&v.kwh<top33).length+'</div><div class="rs-lbl">Medium</div></div><div class="rs"><div class="rs-val" style="color:#4CAF7D">'+entries.filter(([,v])=>v.kwh<top66).length+'</div><div class="rs-lbl">Low</div></div>';
+  const list=document.getElementById('rankList');list.innerHTML='';
+  entries.forEach(([breaker,vals],i)=>{
+    const pct=totalKwh>0?(vals.kwh/totalKwh*100).toFixed(1):0;
+    const barPct=maxKwh>0?(vals.kwh/maxKwh*100).toFixed(1):0;
+    const cls=vals.kwh>=top33?'high':vals.kwh>=top66?'mid':'low';
+    const badge=vals.kwh>=top33?'High — Check for waste':vals.kwh>=top66?'Medium — Monitor':'Low — Efficient';
+    const item=document.createElement('div');
+    item.className='rank-item '+cls;
+    item.innerHTML='<div class="rank-num">'+(i+1)+'</div><div><div class="rank-name">'+breaker+'</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:'+barPct+'%"></div></div><div class="rank-meta">'+pct+'% of total</div><span class="rank-badge">'+badge+'</span></div><div class="rank-vals"><div class="rank-kwh">'+vals.kwh.toLocaleString(undefined,{maximumFractionDigits:0})+' kWh</div><div class="rank-cost">LKR '+Math.round(vals.cost).toLocaleString()+'</div></div>';
+    list.appendChild(item);
+  });
+}
+document.addEventListener('click',function(e){if(e.target===document.getElementById('rankOverlay'))closeRanking();});</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -86,7 +111,42 @@ tr:hover td{background:rgba(0,200,212,.03)}
 
 /* FOOTER */
 .footer{text-align:center;padding:16px;font-size:10px;color:#2A3460;border-top:1px solid var(--border)}
-</style>
+.rank-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.rank-overlay.open{display:flex}
+.rank-panel{background:#0E1220;border:1px solid #1A2540;border-radius:18px;padding:28px;width:720px;max-width:96vw;max-height:88vh;overflow-y:auto;position:relative}
+.rank-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#5A6488;font-size:22px;cursor:pointer}
+.rank-close:hover{color:#fff}
+.rank-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#8B6FE8;margin-bottom:4px}
+.rank-sub{font-size:11px;color:#5A6488;margin-bottom:20px}
+.rank-legend{display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.rl{display:flex;align-items:center;gap:6px;font-size:11px;color:#8892B0}
+.rl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.rank-list{display:flex;flex-direction:column;gap:8px}
+.rank-item{border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:center;position:relative;overflow:hidden;border:1px solid transparent}
+.rank-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+.rank-item.high{background:rgba(224,85,85,.08);border-color:rgba(224,85,85,.2)}.rank-item.high::before{background:#E05555}
+.rank-item.mid{background:rgba(232,146,79,.08);border-color:rgba(232,146,79,.2)}.rank-item.mid::before{background:#E8924F}
+.rank-item.low{background:rgba(76,175,125,.08);border-color:rgba(76,175,125,.2)}.rank-item.low::before{background:#4CAF7D}
+.rank-num{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;text-align:center}
+.rank-item.high .rank-num{color:#E05555}.rank-item.mid .rank-num{color:#E8924F}.rank-item.low .rank-num{color:#4CAF7D}
+.rank-name{font-size:13px;font-weight:600;color:#EEF0F8;margin-bottom:5px}
+.rank-bar-wrap{height:5px;background:#1A2540;border-radius:3px;overflow:hidden;margin-bottom:4px}
+.rank-bar{height:100%;border-radius:3px}
+.rank-item.high .rank-bar{background:linear-gradient(90deg,#E05555,#FF8888)}
+.rank-item.mid .rank-bar{background:linear-gradient(90deg,#E8924F,#FFB380)}
+.rank-item.low .rank-bar{background:linear-gradient(90deg,#4CAF7D,#80DFB0)}
+.rank-meta{font-size:10px;color:#5A6488}
+.rank-vals{text-align:right}
+.rank-kwh{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#00C8D4}
+.rank-cost{font-family:'JetBrains Mono',monospace;font-size:11px;color:#C9A347;margin-top:2px}
+.rank-badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.rank-item.high .rank-badge{background:rgba(224,85,85,.2);color:#E05555;border:1px solid rgba(224,85,85,.3)}
+.rank-item.mid .rank-badge{background:rgba(232,146,79,.2);color:#E8924F;border:1px solid rgba(232,146,79,.3)}
+.rank-item.low .rank-badge{background:rgba(76,175,125,.2);color:#4CAF7D;border:1px solid rgba(76,175,125,.3)}
+.rank-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+.rs{background:#141B2A;border:1px solid #1A2540;border-radius:10px;padding:12px 14px;text-align:center}
+.rs-val{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700}
+.rs-lbl{font-size:9px;color:#5A6488;letter-spacing:1px;text-transform:uppercase;margin-top:2px}</style>
 </head>
 <body>
 
@@ -97,9 +157,9 @@ tr:hover td{background:rgba(0,200,212,.03)}
     <span style="font-size:12px;color:var(--muted)">Breaker Comparison</span>
   </div>
   <div class="topbar-r">
-    <div class="co-pill" id="coPill">—</div>
-    <a href="dashboard.html" class="nav-btn">⚡ Dashboard</a>
-    <a href="production.html" class="nav-btn">🏭 Production</a>
+    <div class="co-pill" id="coPill">â€”</div>
+    <a href="dashboard.html" class="nav-btn">âš¡ Dashboard</a>
+    <a href="production.html" class="nav-btn">ðŸ­ Production</a>
     <button class="nav-btn" onclick="logout()">Sign Out</button>
   </div>
 </div>
@@ -122,6 +182,7 @@ tr:hover td{background:rgba(0,200,212,.03)}
   </select>
   <div class="sep"></div>
   <button class="btn-load" onclick="loadData()">Load Data</button>
+  <button class="btn-load" style="background:linear-gradient(135deg,#7A4FD4,#8B6FE8)" onclick="openRanking()">&#127942; Energy Ranking</button>
 </div>
 
 <div class="main" id="main">
@@ -129,7 +190,7 @@ tr:hover td{background:rgba(0,200,212,.03)}
 </div>
 
 <div class="footer">
-  Dirisdigiware — Breaker Comparison &nbsp;·&nbsp; Developed by Thirasha Bandara &nbsp;·&nbsp; Venora Lanka Power Panels (Pvt) Ltd
+  Dirisdigiware â€” Breaker Comparison &nbsp;Â·&nbsp; Developed by Thirasha Bandara &nbsp;Â·&nbsp; Venora Lanka Power Panels (Pvt) Ltd
 </div>
 
 <script>
@@ -147,7 +208,7 @@ function colAlpha(hex, a) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-// ── AUTH ──────────────────────────────────────────────────────────────────────
+// â”€â”€ AUTH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkAuth(){
   const s=sessionStorage.getItem('user');
   if(!s){window.location.href='login.html';return false;}
@@ -157,7 +218,7 @@ function checkAuth(){
 }
 function logout(){sessionStorage.removeItem('user');window.location.href='login.html';}
 
-// ── DATE PRESETS ──────────────────────────────────────────────────────────────
+// â”€â”€ DATE PRESETS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function setP(preset, btn){
   document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -170,7 +231,7 @@ function setP(preset, btn){
   document.getElementById('toDate').value=to;
 }
 
-// ── LOAD DATA ─────────────────────────────────────────────────────────────────
+// â”€â”€ LOAD DATA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadData(){
   const siteId=user.site_id;
   const from=document.getElementById('fromDate').value;
@@ -178,7 +239,7 @@ async function loadData(){
   const groupBy=document.getElementById('groupBy').value;
   if(!from||!to){alert('Please select date range.');return;}
 
-  document.getElementById('main').innerHTML='<div class="loading">⏳ Loading data...</div>';
+  document.getElementById('main').innerHTML='<div class="loading">â³ Loading data...</div>';
   Object.values(charts).forEach(c=>c.destroy());
   charts={};
 
@@ -189,17 +250,17 @@ async function loadData(){
     });
     const data=await resp.json();
     if(!resp.ok) throw new Error(data.error||'Failed to load');
-    render(data, groupBy);
+    rankData=data; render(data, groupBy);
   }catch(e){
-    document.getElementById('main').innerHTML=`<div class="loading">❌ Error: ${e.message}</div>`;
+    document.getElementById('main').innerHTML=`<div class="loading">âŒ Error: ${e.message}</div>`;
   }
 }
 
-// ── RENDER ────────────────────────────────────────────────────────────────────
+// â”€â”€ RENDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function render(data, groupBy){
   const {periods, breakers, period_data, breaker_totals} = data;
 
-  // Only show the 8 target breakers — filter others
+  // Only show the 8 target breakers â€” filter others
   const TARGET = ['250A BREAKER','2T BOILER & A_C','DBPP','DBPRO1','DBPRO2','DBRM','MACHINE 38_43.1_43.2_43.3','MACHINE 40'];
   const showBreakers = breakers.filter(b => TARGET.includes(b) || TARGET.length===0);
 
@@ -250,7 +311,7 @@ function render(data, groupBy){
   // KPI totals
   const totalKwh  = showBreakers.reduce((s,b)=>s+(breaker_totals[b]?.kwh||0),0);
   const totalCost = showBreakers.reduce((s,b)=>s+(breaker_totals[b]?.cost||0),0);
-  const topBreaker= showBreakers.reduce((top,b)=>(breaker_totals[b]?.kwh||0)>(breaker_totals[top]?.kwh||0)?b:top, showBreakers[0]||'—');
+  const topBreaker= showBreakers.reduce((top,b)=>(breaker_totals[b]?.kwh||0)>(breaker_totals[top]?.kwh||0)?b:top, showBreakers[0]||'â€”');
 
   // Sorted table data
   const sorted=[...showBreakers].sort((a,b)=>(breaker_totals[b]?.kwh||0)-(breaker_totals[a]?.kwh||0));
@@ -281,7 +342,7 @@ function render(data, groupBy){
     <div class="chart-row">
       <div class="chart-card">
         <div class="chart-title">Daily Energy Consumption</div>
-        <div class="chart-sub">kWh per breaker — side by side</div>
+        <div class="chart-sub">kWh per breaker â€” side by side</div>
         <div class="chart-wrap"><canvas id="kwhBar"></canvas></div>
       </div>
       <div class="chart-card" style="--teal:var(--gold)">
@@ -307,7 +368,7 @@ function render(data, groupBy){
 
     <!-- TABLE -->
     <div class="tbl-card" style="position:relative">
-      <div class="tbl-title">Breaker Summary — Total for Selected Period</div>
+      <div class="tbl-title">Breaker Summary â€” Total for Selected Period</div>
       <table>
         <thead>
           <tr>
@@ -336,7 +397,42 @@ function render(data, groupBy){
     const div=document.createElement('div');
     div.className='kpi';
     div.style.setProperty('--c',k.color);
-    div.innerHTML=`<style>.kpi:nth-child(${i+1})::before{background:${k.color}}</style>
+    div.innerHTML=`<style>.kpi:nth-child(${i+1})::before{background:${k.color}}.rank-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.rank-overlay.open{display:flex}
+.rank-panel{background:#0E1220;border:1px solid #1A2540;border-radius:18px;padding:28px;width:720px;max-width:96vw;max-height:88vh;overflow-y:auto;position:relative}
+.rank-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#5A6488;font-size:22px;cursor:pointer}
+.rank-close:hover{color:#fff}
+.rank-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#8B6FE8;margin-bottom:4px}
+.rank-sub{font-size:11px;color:#5A6488;margin-bottom:20px}
+.rank-legend{display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.rl{display:flex;align-items:center;gap:6px;font-size:11px;color:#8892B0}
+.rl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.rank-list{display:flex;flex-direction:column;gap:8px}
+.rank-item{border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:center;position:relative;overflow:hidden;border:1px solid transparent}
+.rank-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+.rank-item.high{background:rgba(224,85,85,.08);border-color:rgba(224,85,85,.2)}.rank-item.high::before{background:#E05555}
+.rank-item.mid{background:rgba(232,146,79,.08);border-color:rgba(232,146,79,.2)}.rank-item.mid::before{background:#E8924F}
+.rank-item.low{background:rgba(76,175,125,.08);border-color:rgba(76,175,125,.2)}.rank-item.low::before{background:#4CAF7D}
+.rank-num{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;text-align:center}
+.rank-item.high .rank-num{color:#E05555}.rank-item.mid .rank-num{color:#E8924F}.rank-item.low .rank-num{color:#4CAF7D}
+.rank-name{font-size:13px;font-weight:600;color:#EEF0F8;margin-bottom:5px}
+.rank-bar-wrap{height:5px;background:#1A2540;border-radius:3px;overflow:hidden;margin-bottom:4px}
+.rank-bar{height:100%;border-radius:3px}
+.rank-item.high .rank-bar{background:linear-gradient(90deg,#E05555,#FF8888)}
+.rank-item.mid .rank-bar{background:linear-gradient(90deg,#E8924F,#FFB380)}
+.rank-item.low .rank-bar{background:linear-gradient(90deg,#4CAF7D,#80DFB0)}
+.rank-meta{font-size:10px;color:#5A6488}
+.rank-vals{text-align:right}
+.rank-kwh{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#00C8D4}
+.rank-cost{font-family:'JetBrains Mono',monospace;font-size:11px;color:#C9A347;margin-top:2px}
+.rank-badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.rank-item.high .rank-badge{background:rgba(224,85,85,.2);color:#E05555;border:1px solid rgba(224,85,85,.3)}
+.rank-item.mid .rank-badge{background:rgba(232,146,79,.2);color:#E8924F;border:1px solid rgba(232,146,79,.3)}
+.rank-item.low .rank-badge{background:rgba(76,175,125,.2);color:#4CAF7D;border:1px solid rgba(76,175,125,.3)}
+.rank-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+.rs{background:#141B2A;border:1px solid #1A2540;border-radius:10px;padding:12px 14px;text-align:center}
+.rs-val{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700}
+.rs-lbl{font-size:9px;color:#5A6488;letter-spacing:1px;text-transform:uppercase;margin-top:2px}</style>
       <div class="kpi-label">${k.label}</div>
       <div class="kpi-val" style="color:${k.color}">${k.val}</div>
       <div class="kpi-sub">${k.sub}</div>`;
@@ -368,7 +464,7 @@ function render(data, groupBy){
   charts.costLine= new Chart(document.getElementById('costLine'),cfg('line', costLineDatasets,chartOpts('LKR','LKR ',true)));
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// â”€â”€ INIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if(checkAuth()){
   // Default: all time for S&D data (Nov 2025)
   document.getElementById('fromDate').value='2025-11-01';
@@ -376,6 +472,45 @@ if(checkAuth()){
   document.getElementById('groupBy').value='daily';
   loadData();
 }
-</script>
-</body>
+let rankData=null;
+function openRanking(){if(rankData)buildRanking(rankData);document.getElementById('rankOverlay').classList.add('open');}
+function closeRanking(){document.getElementById('rankOverlay').classList.remove('open');}
+function buildRanking(data){
+  const{breaker_totals,from,to}=data;
+  const TARGET=['250A BREAKER','2T BOILER & A_C','DBPP','DBPRO1','DBPRO2','DBRM','MACHINE 38_43.1_43.2_43.3','MACHINE 40'];
+  let entries=Object.entries(breaker_totals).filter(([b,v])=>v.kwh>0&&(TARGET.includes(b)||TARGET.length===0)).sort((a,b)=>b[1].kwh-a[1].kwh);
+  if(!entries.length){document.getElementById('rankList').innerHTML='<div style="text-align:center;padding:30px;color:#5A6488">No data for selected period</div>';return;}
+  const totalKwh=entries.reduce((s,[,v])=>s+v.kwh,0);
+  const maxKwh=entries[0][1].kwh;
+  const top33=maxKwh*0.66,top66=maxKwh*0.33;
+  document.getElementById('rankSub').textContent=entries.length+' breakers ranked from '+from+' to '+to;
+  document.getElementById('rankSummary').innerHTML='<div class="rs"><div class="rs-val" style="color:#E05555">'+entries.filter(([,v])=>v.kwh>=top33).length+'</div><div class="rs-lbl">High</div></div><div class="rs"><div class="rs-val" style="color:#E8924F">'+entries.filter(([,v])=>v.kwh>=top66&&v.kwh<top33).length+'</div><div class="rs-lbl">Medium</div></div><div class="rs"><div class="rs-val" style="color:#4CAF7D">'+entries.filter(([,v])=>v.kwh<top66).length+'</div><div class="rs-lbl">Low</div></div>';
+  const list=document.getElementById('rankList');list.innerHTML='';
+  entries.forEach(([breaker,vals],i)=>{
+    const pct=totalKwh>0?(vals.kwh/totalKwh*100).toFixed(1):0;
+    const barPct=maxKwh>0?(vals.kwh/maxKwh*100).toFixed(1):0;
+    const cls=vals.kwh>=top33?'high':vals.kwh>=top66?'mid':'low';
+    const badge=vals.kwh>=top33?'High — Check for waste':vals.kwh>=top66?'Medium — Monitor':'Low — Efficient';
+    const item=document.createElement('div');
+    item.className='rank-item '+cls;
+    item.innerHTML='<div class="rank-num">'+(i+1)+'</div><div><div class="rank-name">'+breaker+'</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:'+barPct+'%"></div></div><div class="rank-meta">'+pct+'% of total</div><span class="rank-badge">'+badge+'</span></div><div class="rank-vals"><div class="rank-kwh">'+vals.kwh.toLocaleString(undefined,{maximumFractionDigits:0})+' kWh</div><div class="rank-cost">LKR '+Math.round(vals.cost).toLocaleString()+'</div></div>';
+    list.appendChild(item);
+  });
+}
+document.addEventListener('click',function(e){if(e.target===document.getElementById('rankOverlay'))closeRanking();});</script>
+<div class="rank-overlay" id="rankOverlay">
+  <div class="rank-panel">
+    <button class="rank-close" onclick="closeRanking()">&#x2715;</button>
+    <div class="rank-title">&#127942; Energy Ranking</div>
+    <div class="rank-sub" id="rankSub">Breakers ranked by total consumption</div>
+    <div class="rank-summary" id="rankSummary"></div>
+    <div class="rank-legend">
+      <div class="rl"><div class="rl-dot" style="background:#E05555"></div>High — investigate for waste</div>
+      <div class="rl"><div class="rl-dot" style="background:#E8924F"></div>Medium — monitor closely</div>
+      <div class="rl"><div class="rl-dot" style="background:#4CAF7D"></div>Low — efficient</div>
+    </div>
+    <div class="rank-list" id="rankList"><div style="text-align:center;padding:30px;color:#5A6488">Load data first then open ranking</div></div>
+  </div>
+</div></body>
 </html>
+
