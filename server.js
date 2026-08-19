@@ -14,6 +14,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/login.html',      (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/dashboard.html',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
 app.get('/production.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'production.html')));
+app.get('/comparison.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'comparison.html')));
 app.get('/upload.html',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'upload.html')));
 
 // ── API ROUTES ────────────────────────────────────────────────────────────────
