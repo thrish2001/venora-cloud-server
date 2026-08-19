@@ -352,7 +352,7 @@ router.get('/breaker-comparison', async (req, res) => {
       SELECT DISTINCT
         period,
         breaker_name,
-        GREATEST(last_kwh - first_kwh, 0) AS total_kwh
+        GREATEST(last_kwh - first_kwh, 0) / 1000.0 AS total_kwh
       FROM periods
       ORDER BY period ASC, breaker_name ASC
     `, [site_id, fromDate, toDate]);
@@ -411,6 +411,7 @@ router.get('/unit-usage', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
