@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Breaker Comparison — Dirisdigiware</title>
+<title>Breaker Comparison â€” Dirisdigiware</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap');
@@ -97,9 +97,9 @@ tr:hover td{background:rgba(0,200,212,.03)}
     <span style="font-size:12px;color:var(--muted)">Breaker Comparison</span>
   </div>
   <div class="topbar-r">
-    <div class="co-pill" id="coPill">—</div>
-    <a href="dashboard.html" class="nav-btn">⚡ Dashboard</a>
-    <a href="production.html" class="nav-btn">🏭 Production</a>
+    <div class="co-pill" id="coPill">â€”</div>
+    <a href="dashboard.html" class="nav-btn">âš¡ Dashboard</a>
+    <a href="production.html" class="nav-btn">ðŸ­ Production</a>
     <button class="nav-btn" onclick="logout()">Sign Out</button>
   </div>
 </div>
@@ -129,7 +129,7 @@ tr:hover td{background:rgba(0,200,212,.03)}
 </div>
 
 <div class="footer">
-  Dirisdigiware — Breaker Comparison &nbsp;·&nbsp; Developed by Thirasha Bandara &nbsp;·&nbsp; Venora Lanka Power Panels (Pvt) Ltd
+  Dirisdigiware â€” Breaker Comparison &nbsp;Â·&nbsp; Developed by Thirasha Bandara &nbsp;Â·&nbsp; Venora Lanka Power Panels (Pvt) Ltd
 </div>
 
 <script>
@@ -147,7 +147,7 @@ function colAlpha(hex, a) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-// ── AUTH ──────────────────────────────────────────────────────────────────────
+// â”€â”€ AUTH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkAuth(){
   const s=sessionStorage.getItem('user');
   if(!s){window.location.href='login.html';return false;}
@@ -157,7 +157,7 @@ function checkAuth(){
 }
 function logout(){sessionStorage.removeItem('user');window.location.href='login.html';}
 
-// ── DATE PRESETS ──────────────────────────────────────────────────────────────
+// â”€â”€ DATE PRESETS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function setP(preset, btn){
   document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -170,7 +170,7 @@ function setP(preset, btn){
   document.getElementById('toDate').value=to;
 }
 
-// ── LOAD DATA ─────────────────────────────────────────────────────────────────
+// â”€â”€ LOAD DATA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadData(){
   const siteId=user.site_id;
   const from=document.getElementById('fromDate').value;
@@ -178,7 +178,7 @@ async function loadData(){
   const groupBy=document.getElementById('groupBy').value;
   if(!from||!to){alert('Please select date range.');return;}
 
-  document.getElementById('main').innerHTML='<div class="loading">⏳ Loading data...</div>';
+  document.getElementById('main').innerHTML='<div class="loading">â³ Loading data...</div>';
   Object.values(charts).forEach(c=>c.destroy());
   charts={};
 
@@ -191,15 +191,15 @@ async function loadData(){
     if(!resp.ok) throw new Error(data.error||'Failed to load');
     render(data, groupBy);
   }catch(e){
-    document.getElementById('main').innerHTML=`<div class="loading">❌ Error: ${e.message}</div>`;
+    document.getElementById('main').innerHTML=`<div class="loading">âŒ Error: ${e.message}</div>`;
   }
 }
 
-// ── RENDER ────────────────────────────────────────────────────────────────────
+// â”€â”€ RENDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function render(data, groupBy){
   const {periods, breakers, period_data, breaker_totals} = data;
 
-  // Only show the 8 target breakers — filter others
+  // Only show the 8 target breakers â€” filter others
   const TARGET = ['250A BREAKER','2T BOILER & A_C','DBPP','DBPRO1','DBPRO2','DBRM','MACHINE 38_43.1_43.2_43.3','MACHINE 40'];
   const showBreakers = breakers.filter(b => TARGET.includes(b) || TARGET.length===0);
 
@@ -250,7 +250,7 @@ function render(data, groupBy){
   // KPI totals
   const totalKwh  = showBreakers.reduce((s,b)=>s+(breaker_totals[b]?.kwh||0),0);
   const totalCost = showBreakers.reduce((s,b)=>s+(breaker_totals[b]?.cost||0),0);
-  const topBreaker= showBreakers.reduce((top,b)=>(breaker_totals[b]?.kwh||0)>(breaker_totals[top]?.kwh||0)?b:top, showBreakers[0]||'—');
+  const topBreaker= showBreakers.reduce((top,b)=>(breaker_totals[b]?.kwh||0)>(breaker_totals[top]?.kwh||0)?b:top, showBreakers[0]||'â€”');
 
   // Sorted table data
   const sorted=[...showBreakers].sort((a,b)=>(breaker_totals[b]?.kwh||0)-(breaker_totals[a]?.kwh||0));
@@ -281,7 +281,7 @@ function render(data, groupBy){
     <div class="chart-row">
       <div class="chart-card">
         <div class="chart-title">Daily Energy Consumption</div>
-        <div class="chart-sub">kWh per breaker — side by side</div>
+        <div class="chart-sub">kWh per breaker â€” side by side</div>
         <div class="chart-wrap"><canvas id="kwhBar"></canvas></div>
       </div>
       <div class="chart-card" style="--teal:var(--gold)">
@@ -307,7 +307,7 @@ function render(data, groupBy){
 
     <!-- TABLE -->
     <div class="tbl-card" style="position:relative">
-      <div class="tbl-title">Breaker Summary — Total for Selected Period</div>
+      <div class="tbl-title">Breaker Summary â€” Total for Selected Period</div>
       <table>
         <thead>
           <tr>
@@ -368,7 +368,7 @@ function render(data, groupBy){
   charts.costLine= new Chart(document.getElementById('costLine'),cfg('line', costLineDatasets,chartOpts('LKR','LKR ',true)));
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// â”€â”€ INIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if(checkAuth()){
   // Default: all time for S&D data (Nov 2025)
   document.getElementById('fromDate').value='2025-11-01';
@@ -379,3 +379,4 @@ if(checkAuth()){
 </script>
 </body>
 </html>
+
