@@ -1,4 +1,4 @@
-﻿// routes/upload.js — Diris Digiware semicolon fix
+﻿// routes/upload.js — fixed BOM and empty row handling
 const express = require('express');
 const router  = express.Router();
 const pool    = require('../db');
@@ -18,71 +18,93 @@ function checkAuth(req, res, next) {
 
 function detectDelimiter(lines) {
   const sample = lines.slice(0,8).join('\n');
-  const s = (sample.match(/;/g)||[]).length;
-  const t = (sample.match(/\t/g)||[]).length;
-  const c = (sample.match(/,/g)||[]).length;
-  if (s > c && s > t) return ';';
-  if (t > c && t > s) return '\t';
+  const s=(sample.match(/;/g)||[]).length;
+  const t=(sample.match(/\t/g)||[]).length;
+  const c=(sample.match(/,/g)||[]).length;
+  if(s>c&&s>t) return ';';
+  if(t>c&&t>s) return '\t';
   return ',';
 }
 
 function splitLine(line, delim) {
-  return line.split(delim).map(c => c.trim().replace(/^"|"$/g,''));
+  // Remove BOM
+  line = line.replace(/^\uFEFF/,'').replace(/^\xEF\xBB\xBF/,'');
+  if(delim===';'||delim==='\t')
+    return line.split(delim).map(c=>c.trim().replace(/^"|"$/g,''));
+  // comma with quote handling
+  const vals=[];let inQ=false,cur='';
+  for(const ch of line+','){
+    if(ch==='"'){inQ=!inQ;continue;}
+    if(ch===','&&!inQ){vals.push(cur.trim());cur='';}
+    else cur+=ch;
+  }
+  return vals;
 }
 
 function parseDateTime(raw) {
-  if (!raw) return null;
-  raw = String(raw).trim();
-  if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(raw)) return new Date(raw.replace(' ','T'));
-  if (/^\d{2}\/\d{2}\/\d{4}/.test(raw)) {
-    const [dp,tp='00:00:00'] = raw.split(' ');
-    const [dd,mm,yyyy] = dp.split('/');
+  if(!raw) return null;
+  raw=String(raw).trim().replace(/^\uFEFF/,'');
+  if(/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(raw)) return new Date(raw.replace(' ','T'));
+  if(/^\d{2}\/\d{2}\/\d{4}/.test(raw)){
+    const[dp,tp='00:00:00']=raw.split(' ');
+    const[dd,mm,yyyy]=dp.split('/');
     return new Date(`${yyyy}-${mm}-${dd}T${tp}`);
   }
   return null;
 }
 
 function parseDirisIndex(lines, delim) {
-  const rows = [];
-  let loadNameIdx=-1, measIdx=-1, unitIdx=-1, scaleIdx=-1, dataStart=-1;
-  for (let i=0;i<Math.min(25,lines.length);i++) {
-    const low = lines[i].toLowerCase();
-    if (low.includes('load name')) loadNameIdx=i;
-    if (low.includes('measured value')) measIdx=i;
-    if (low.startsWith('unit')) unitIdx=i;
-    if (low.startsWith('scale')) scaleIdx=i;
+  const rows=[];
+  let loadNameIdx=-1,measIdx=-1,unitIdx=-1,scaleIdx=-1,dataStart=-1;
+
+  for(let i=0;i<Math.min(30,lines.length);i++){
+    const raw=lines[i].replace(/^\uFEFF/,'');
+    const low=raw.toLowerCase();
+    const cols=splitLine(raw,delim);
+    const first=(cols[0]||'').toLowerCase().trim();
+    if(first==='load name'||low.startsWith('"load name')) loadNameIdx=i;
+    else if(first==='measured value'||low.startsWith('"measured value')) measIdx=i;
+    else if(first==='unit') unitIdx=i;
+    else if(first==='scale') scaleIdx=i;
   }
-  const hdrEnd = Math.max(loadNameIdx,measIdx,unitIdx,scaleIdx);
-  for (let i=hdrEnd+1;i<lines.length;i++) {
-    const cols = splitLine(lines[i],delim);
-    if (cols[0] && parseDateTime(cols[0])) { dataStart=i; break; }
+
+  // Find data start — first row where col0 is a valid timestamp
+  const hdrEnd=Math.max(loadNameIdx,measIdx,unitIdx,scaleIdx,0);
+  for(let i=hdrEnd+1;i<lines.length;i++){
+    if(!lines[i].trim()) continue;
+    const cols=splitLine(lines[i],delim);
+    if(cols[0]&&parseDateTime(cols[0])){dataStart=i;break;}
   }
-  if (loadNameIdx===-1||dataStart===-1) return null;
-  const loadNames = splitLine(lines[loadNameIdx],delim);
-  const measValues = measIdx!==-1 ? splitLine(lines[measIdx],delim) : [];
-  const units = unitIdx!==-1 ? splitLine(lines[unitIdx],delim) : [];
-  const scales = scaleIdx!==-1 ? splitLine(lines[scaleIdx],delim) : [];
+
+  if(loadNameIdx===-1||dataStart===-1) return null;
+
+  const loadNames=splitLine(lines[loadNameIdx],delim);
+  const measValues=measIdx!==-1?splitLine(lines[measIdx],delim):[];
+  const units=unitIdx!==-1?splitLine(lines[unitIdx],delim):[];
+  const scales=scaleIdx!==-1?splitLine(lines[scaleIdx],delim):[];
+
   const colMap=[];
-  for (let c=1;c<loadNames.length;c++) {
+  for(let c=1;c<loadNames.length;c++){
     const breaker=(loadNames[c]||'').trim();
     const measured=(measValues[c]||'').trim().toLowerCase();
     const unit=(units[c]||'').trim().toLowerCase();
     const scale=parseFloat(scales[c])||1;
-    if (breaker) colMap.push({c,breaker,measured,unit,scale});
+    if(breaker) colMap.push({c,breaker,measured,unit,scale});
   }
-  for (let i=dataStart;i<lines.length;i++) {
-    const line=lines[i].trim(); if(!line) continue;
+
+  for(let i=dataStart;i<lines.length;i++){
+    const line=lines[i].trim();if(!line) continue;
     const cols=splitLine(line,delim);
-    const recorded_at=parseDateTime(cols[0]); if(!recorded_at) continue;
+    const recorded_at=parseDateTime(cols[0]);if(!recorded_at) continue;
     const bd={};
-    for (const col of colMap) {
-      const raw=parseFloat(cols[col.c]); if(isNaN(raw)) continue;
+    for(const col of colMap){
+      const raw=parseFloat(cols[col.c]);if(isNaN(raw)) continue;
       const val=raw/col.scale;
       if(!bd[col.breaker]) bd[col.breaker]={kwh:null,kva:null};
       if(col.measured==='ea+'&&col.unit.includes('kwh')) bd[col.breaker].kwh=val;
       if(col.measured==='es'&&col.unit.includes('kvah')) bd[col.breaker].kva=val/0.25;
     }
-    for (const [breaker,vals] of Object.entries(bd)) {
+    for(const[breaker,vals]of Object.entries(bd)){
       if(vals.kwh===null&&vals.kva===null) continue;
       rows.push({breaker_name:breaker,recorded_at,kwh:vals.kwh,kva:vals.kva,voltage:null});
     }
@@ -90,21 +112,33 @@ function parseDirisIndex(lines, delim) {
   return rows;
 }
 
-router.post('/csv', checkAuth, async (req,res) => {
+router.post('/csv', checkAuth, async(req,res)=>{
   const site_id=parseInt(req.query.site_id);
   if(!site_id) return res.status(400).json({error:'site_id required'});
   let csvText='';
   req.setEncoding('utf8');
   await new Promise((resolve,reject)=>{req.on('data',c=>{csvText+=c;});req.on('end',resolve);req.on('error',reject);});
   if(!csvText.trim()) return res.status(400).json({error:'Empty file'});
+  // Remove BOM from start
+  csvText=csvText.replace(/^\uFEFF/,'');
   const lines=csvText.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
   const delim=detectDelimiter(lines);
-  const top8=lines.slice(0,8).join('\n').toLowerCase();
-  const isDiris=top8.includes('device name')||top8.includes('load name')||top8.includes('measured value');
-  let toInsert=[]; const skipped=[];
+  const top=lines.slice(0,10).join('\n').toLowerCase();
+  const isDiris=top.includes('device name')||top.includes('load name')||top.includes('measured value');
+  let toInsert=[];const skipped=[];
+
   if(isDiris){
     const parsed=parseDirisIndex(lines,delim);
-    if(!parsed||!parsed.length) return res.status(400).json({error:'Could not parse Diris Index file',delim,first5:lines.slice(0,5)});
+    if(!parsed||!parsed.length){
+      // Debug info
+      const hdrs={};
+      for(let i=0;i<Math.min(20,lines.length);i++){
+        const l=lines[i].replace(/^\uFEFF/,'');
+        const first=(splitLine(l,delim)[0]||'').toLowerCase().trim();
+        hdrs[i]=first;
+      }
+      return res.status(400).json({error:'Could not parse Diris Index file',delim,row_headers:hdrs,first10:lines.slice(0,10)});
+    }
     toInsert=parsed.map(r=>({...r,site_id}));
   } else {
     let hdrIdx=0;
@@ -112,7 +146,7 @@ router.post('/csv', checkAuth, async (req,res) => {
     const headers=splitLine(lines[hdrIdx],delim).map(h=>h.toLowerCase());
     function findCol(row,...names){for(const n of names){const i=headers.indexOf(n);if(i!==-1&&row[i]!==undefined&&row[i]!=='')return row[i];}return null;}
     for(let i=hdrIdx+1;i<lines.length;i++){
-      const line=lines[i].trim(); if(!line) continue;
+      const line=lines[i].trim();if(!line) continue;
       const cols=splitLine(line,delim);
       const dt=parseDateTime(findCol(cols,'recorded_at','datetime','timestamp'));
       if(!dt){skipped.push({row:i+1});continue;}
@@ -123,6 +157,7 @@ router.post('/csv', checkAuth, async (req,res) => {
       toInsert.push({site_id,breaker_name:breaker,recorded_at:dt,kwh:isNaN(kwh)?null:kwh,kva:isNaN(kva)?null:kva,voltage:null});
     }
   }
+
   if(!toInsert.length) return res.status(400).json({error:'No valid rows',delim,skipped_count:skipped.length});
   const client=await pool.connect();
   let inserted=0,duplicates=0;
