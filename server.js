@@ -1,4 +1,5 @@
-﻿const express = require('express');
+﻿app.post('/api/fix-kwh', async (req, res) => { if (req.headers['x-api-key'] !== process.env.API_SECRET_KEY) return res.status(401).json({error:'no'}); const result = await require('./db').query('UPDATE energy_readings SET kwh = kwh / 1000 WHERE site_id = 2 AND kwh > 1000'); res.json({updated: result.rowCount}); });
+const express = require('express');
 const cors    = require('cors');
 const path    = require('path');
 require('dotenv').config();
@@ -53,5 +54,6 @@ async function initDB() {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, async () => { await initDB(); console.log('Server on port ' + PORT); });
+
 
 
