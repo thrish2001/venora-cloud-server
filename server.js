@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const cors    = require('cors');
 const path    = require('path');
 require('dotenv').config();
@@ -10,14 +10,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── HTML PAGES ────────────────────────────────────────────────────────────────
+// â”€â”€ HTML PAGES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.get('/login.html',      (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/dashboard.html',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
 app.get('/production.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'production.html')));
 app.get('/comparison.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'comparison.html')));
+app.get('/comparison.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'comparison.html')));
 app.get('/upload.html',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'upload.html')));
 
-// ── API ROUTES ────────────────────────────────────────────────────────────────
+// â”€â”€ API ROUTES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use('/api/upload',     require('./routes/upload'));
 app.use('/api/analytics',  require('./routes/analytics'));
 app.use('/api/sites',      require('./routes/sites'));
@@ -33,7 +34,7 @@ app.post('/api/calculate-costs', async (req, res) => {
   res.json({ success: true });
 });
 
-// ── DATABASE ──────────────────────────────────────────────────────────────────
+// â”€â”€ DATABASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function initDB() {
   const client = await pool.connect();
   try {
@@ -52,3 +53,4 @@ async function initDB() {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, async () => { await initDB(); console.log('Server on port ' + PORT); });
+
