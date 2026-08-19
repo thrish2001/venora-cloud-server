@@ -54,3 +54,4 @@ async function initDB() {
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, async () => { await initDB(); console.log('Server on port ' + PORT); });
 
+
