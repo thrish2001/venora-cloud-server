@@ -325,26 +325,35 @@ router.get('/breaker-comparison', async (req, res) => {
     const breakerResult = await pool.query(`SELECT DISTINCT breaker_name FROM energy_readings WHERE site_id=$1 ORDER BY breaker_name ASC`, [site_id]);
     const allBreakers = breakerResult.rows.map(r => r.breaker_name);
 
-    // Delta: last reading minus first reading per period per breaker
+    // Delta: last reading of each day minus last reading of previous day
     const result = await pool.query(`
-      WITH bounds AS (
+      WITH daily_last AS (
+        SELECT DISTINCT ON (DATE_TRUNC('day', recorded_at), breaker_name)
+          DATE_TRUNC('day', recorded_at) AS day,
+          breaker_name,
+          kwh
+        FROM energy_readings
+        WHERE site_id=$1
+          AND recorded_at >= ($2::timestamp - INTERVAL '1 day')
+          AND recorded_at <= ($3::timestamp + INTERVAL '1 day')
+          AND kwh IS NOT NULL
+        ORDER BY DATE_TRUNC('day', recorded_at), breaker_name, recorded_at DESC
+      ),
+      periods AS (
         SELECT
           ${groupExpr} AS period,
           breaker_name,
-          MIN(kwh) AS first_kwh,
-          MAX(kwh) AS last_kwh
-        FROM energy_readings
-        WHERE site_id=$1
-          AND recorded_at >= $2::timestamp
-          AND recorded_at <= ($3::timestamp + INTERVAL '1 day')
-          AND kwh IS NOT NULL
-        GROUP BY ${groupExpr}, breaker_name
+          FIRST_VALUE(kwh) OVER (PARTITION BY ${groupExpr}, breaker_name ORDER BY day DESC) AS last_kwh,
+          FIRST_VALUE(kwh) OVER (PARTITION BY ${groupExpr}, breaker_name ORDER BY day ASC) AS first_kwh
+        FROM daily_last
+        WHERE day >= $2::timestamp
+          AND day <= ($3::timestamp + INTERVAL '1 day')
       )
-      SELECT
+      SELECT DISTINCT
         period,
         breaker_name,
-        GREATEST(last_kwh - first_kwh, 0) / 1000 AS total_kwh
-      FROM bounds
+        GREATEST(last_kwh - first_kwh, 0) AS total_kwh
+      FROM periods
       ORDER BY period ASC, breaker_name ASC
     `, [site_id, fromDate, toDate]);
 
@@ -402,5 +411,6 @@ router.get('/unit-usage', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
