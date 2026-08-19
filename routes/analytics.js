@@ -203,6 +203,112 @@ router.get('/monthly-cost', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+
+// ── BREAKER COMPARISON ENDPOINT ──────────────────────────────────────────────
+// GET /api/analytics/breaker-comparison?site_id=2&from=2025-11-18&to=2025-11-26&group_by=daily
+router.get('/breaker-comparison', async (req, res) => {
+  const { site_id, from, to, group_by = 'daily' } = req.query;
+  const fromDate = from || new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+  const toDate   = to   || new Date().toISOString().split('T')[0];
+
+  try {
+    // Get tariff config
+    const tariffResult = await pool.query('SELECT * FROM tariff_config WHERE site_id=$1 LIMIT 1', [site_id]);
+    const t = tariffResult.rows[0] || { peak_start:17, peak_end:22, unit_rate_peak:39.00, unit_rate_offpeak:16.50, unit_rate_day:19.00 };
+    const peakRate    = parseFloat(t.unit_rate_peak)    || 39.00;
+    const offpeakRate = parseFloat(t.unit_rate_offpeak) || 16.50;
+    const dayRate     = 19.00;
+
+    const groupMap = {
+      hourly:  "DATE_TRUNC('hour',  recorded_at)",
+      daily:   "DATE_TRUNC('day',   recorded_at)",
+      weekly:  "DATE_TRUNC('week',  recorded_at)",
+      monthly: "DATE_TRUNC('month', recorded_at)"
+    };
+    const groupExpr = groupMap[group_by] || groupMap.daily;
+
+    const energyExpr = `CASE
+      WHEN kva IS NOT NULL AND kwh IS NOT NULL THEN kwh * 0.25
+      WHEN kva IS NULL     AND kwh IS NOT NULL THEN kwh
+      ELSE 0
+    END`;
+
+    // Get all breakers for this site
+    const breakerResult = await pool.query(
+      `SELECT DISTINCT breaker_name FROM energy_readings WHERE site_id=$1 ORDER BY breaker_name ASC`,
+      [site_id]
+    );
+    const allBreakers = breakerResult.rows.map(r => r.breaker_name);
+
+    // Get per-period per-breaker data
+    const result = await pool.query(`
+      SELECT
+        ${groupExpr} AS period,
+        breaker_name,
+        SUM(${energyExpr}) AS total_kwh,
+        SUM(CASE
+          WHEN EXTRACT(HOUR FROM recorded_at) >= $4 AND EXTRACT(HOUR FROM recorded_at) < $5
+          THEN (${energyExpr}) ELSE 0
+        END) AS peak_kwh,
+        SUM(CASE
+          WHEN EXTRACT(HOUR FROM recorded_at) >= 9 AND EXTRACT(HOUR FROM recorded_at) < $4
+          THEN (${energyExpr}) ELSE 0
+        END) AS day_kwh,
+        SUM(CASE
+          WHEN EXTRACT(HOUR FROM recorded_at) < 9 OR EXTRACT(HOUR FROM recorded_at) >= $5
+          THEN (${energyExpr}) ELSE 0
+        END) AS offpeak_kwh,
+        MAX(COALESCE(kva, 0)) AS max_kva
+      FROM energy_readings
+      WHERE site_id = $1
+        AND recorded_at >= $2::timestamp
+        AND recorded_at <= ($3::timestamp + INTERVAL '1 day')
+      GROUP BY ${groupExpr}, breaker_name
+      ORDER BY period ASC, breaker_name ASC
+    `, [site_id, fromDate, toDate, t.peak_start, t.peak_end]);
+
+    // Build periods list
+    const periodSet = [...new Set(result.rows.map(r => new Date(r.period).toISOString()))].sort();
+
+    // Build dataset: for each period, each breaker has kwh + cost
+    const periodData = {};
+    for (const row of result.rows) {
+      const pKey = new Date(row.period).toISOString();
+      if (!periodData[pKey]) periodData[pKey] = {};
+      const kwh  = parseFloat(row.total_kwh)    || 0;
+      const peak  = parseFloat(row.peak_kwh)    || 0;
+      const day   = parseFloat(row.day_kwh)     || 0;
+      const off   = parseFloat(row.offpeak_kwh) || 0;
+      const cost  = peak * peakRate + day * dayRate + off * offpeakRate;
+      periodData[pKey][row.breaker_name] = { kwh: Math.round(kwh * 100) / 100, cost: Math.round(cost) };
+    }
+
+    // Build totals per breaker
+    const breakerTotals = {};
+    for (const row of result.rows) {
+      const kwh  = parseFloat(row.total_kwh)    || 0;
+      const peak = parseFloat(row.peak_kwh)     || 0;
+      const day  = parseFloat(row.day_kwh)      || 0;
+      const off  = parseFloat(row.offpeak_kwh)  || 0;
+      const cost = peak * peakRate + day * dayRate + off * offpeakRate;
+      if (!breakerTotals[row.breaker_name]) breakerTotals[row.breaker_name] = { kwh: 0, cost: 0 };
+      breakerTotals[row.breaker_name].kwh  += kwh;
+      breakerTotals[row.breaker_name].cost += cost;
+    }
+
+    res.json({
+      periods:       periodSet,
+      breakers:      allBreakers,
+      period_data:   periodData,
+      breaker_totals: breakerTotals,
+      group_by,
+      from: fromDate,
+      to:   toDate
+    });
+
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;
 // Unit usage for a site
 router.get('/unit-usage', async (req, res) => {
