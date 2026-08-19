@@ -248,12 +248,12 @@ function render(data, groupBy){
   }));
 
   // KPI totals
-  const totalKwh  = showBreakers.reduce((s,b)=>s+(breaker_totals[b]?.kwh||0),0);
+  const totalKwh  = showBreakers.reduce((s,b)=>s+((breaker_totals[b]?.kwh||0)/1000),0);
   const totalCost = showBreakers.reduce((s,b)=>s+(breaker_totals[b]?.cost||0),0);
-  const topBreaker= showBreakers.reduce((top,b)=>(breaker_totals[b]?.kwh||0)>(breaker_totals[top]?.kwh||0)?b:top, showBreakers[0]||'â€”');
+  const topBreaker= showBreakers.reduce((top,b)=>((breaker_totals[b]?.kwh||0)/1000)>(breaker_totals[top]?.kwh||0)?b:top, showBreakers[0]||'â€”');
 
   // Sorted table data
-  const sorted=[...showBreakers].sort((a,b)=>(breaker_totals[b]?.kwh||0)-(breaker_totals[a]?.kwh||0));
+  const sorted=[...showBreakers].sort((a,b)=>((breaker_totals[b]?.kwh||0)/1000)-(breaker_totals[a]?.kwh||0));
 
   // Chart options
   const chartOpts = (ylabel, prefix='', isCost=false) => ({
@@ -379,4 +379,5 @@ if(checkAuth()){
 </script>
 </body>
 </html>
+
 
