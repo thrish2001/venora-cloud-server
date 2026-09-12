@@ -329,8 +329,43 @@ function renderAll(cmp,prod){
   </div>
 </div>
 
-</body>
+<script>
+var aiOpen=false,aiHist=[],aiThink=false,lastData=null;
+function toggleAI(){aiOpen=!aiOpen;document.getElementById('aiPanel').classList.toggle('open',aiOpen);if(aiOpen)document.getElementById('aiInp').focus();}
+function aiKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI();}}
+function askSug(btn){document.getElementById('aiInp').value=btn.textContent;document.getElementById('aiSugs').style.display='none';sendAI();}
+function addMsg(role,html){var msgs=document.getElementById('aiMsgs');var div=document.createElement('div');div.className='ai-msg '+role;div.innerHTML='<div class="ai-bbl">'+html+'</div>';msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;}
+async function sendAI(){
+  if(aiThink)return;
+  var inp=document.getElementById('aiInp');var q=inp.value.trim();if(!q)return;
+  inp.value='';addMsg('user',q);aiHist.push({role:'user',content:q});
+  document.getElementById('aiSugs').style.display='none';
+  aiThink=true;document.getElementById('aiSend').disabled=true;
+  document.getElementById('aiTyp').classList.add('show');
+  try{
+    var ctx='S&D Factory energy data is available for analysis. ';
+    if(lastData){
+      var bt=lastData.breaker_totals||{};
+      var br=Object.keys(bt).filter(function(b){return bt[b]&&bt[b].kwh>0;}).sort(function(a,b){return bt[b].kwh-bt[a].kwh;});
+      var tk=br.reduce(function(s,b){return s+bt[b].kwh;},0);
+      var tc=br.reduce(function(s,b){return s+bt[b].cost;},0);
+      ctx='S&D Factory Energy (Nov 2025, 18 days). Total: '+tk.toFixed(0)+' kWh, LKR '+Math.round(tc).toLocaleString()+'. Top breakers: ';
+      br.slice(0,5).forEach(function(b){ctx+=b+' '+bt[b].kwh.toFixed(0)+' kWh, ';});
+      ctx+='LEC tariff: Peak LKR 39 (17-22h), Day LKR 19 (9-17h), Off-Peak LKR 16.50 (22-9h).';
+    }
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,system:'You are an Energy Intelligence Agent for S&D factory by Venora Lanka Power Panels. '+ctx+' Answer concisely with actual numbers. Flag waste. Give recommendations.',messages:aiHist})});
+    var d=await resp.json();
+    var reply=(d.content&&d.content[0]&&d.content[0].text)||'Could not get response.';
+    reply=reply.replace(/\*\*(.*?)\*\*/g,'<strong></strong>').replace(/\n/g,'<br>');
+    aiHist.push({role:'assistant',content:(d.content&&d.content[0]&&d.content[0].text)||reply});
+    document.getElementById('aiTyp').classList.remove('show');
+    addMsg('ai',reply);
+  }catch(e){document.getElementById('aiTyp').classList.remove('show');addMsg('ai','Connection error. Please try again.');}
+  aiThink=false;document.getElementById('aiSend').disabled=false;
+}
+</script></body>
 </html>
+
 
 
 
