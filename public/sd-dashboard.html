@@ -4,7 +4,47 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>S&D Energy Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
+var aiOpen=false,aiHist=[],aiThink=false,lastData=null;
+function toggleAI(){aiOpen=!aiOpen;document.getElementById('aiPanel').classList.toggle('open',aiOpen);if(aiOpen)document.getElementById('aiInp').focus();}
+function aiKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI();}}
+function askSug(btn){document.getElementById('aiInp').value=btn.textContent;document.getElementById('aiSugs').style.display='none';sendAI();}
+function addMsg(role,html){var msgs=document.getElementById('aiMsgs');var div=document.createElement('div');div.className='ai-msg '+role;div.innerHTML='<div class="ai-bbl">'+html+'</div>';msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;}
+async function sendAI(){
+  if(aiThink)return;
+  var inp=document.getElementById('aiInp');var q=inp.value.trim();if(!q)return;
+  inp.value='';addMsg('user',q);aiHist.push({role:'user',content:q});
+  document.getElementById('aiSugs').style.display='none';
+  aiThink=true;document.getElementById('aiSend').disabled=true;
+  document.getElementById('aiTyp').classList.add('show');
+  document.getElementById('aiMsgs').scrollTop=document.getElementById('aiMsgs').scrollHeight;
+  try{
+    var ctx='';
+    if(lastData){
+      var bt=lastData.breaker_totals||{};
+      var breakers=Object.keys(bt).filter(function(b){return bt[b].kwh>0;}).sort(function(a,b){return bt[b].kwh-bt[a].kwh;});
+      var totalKwh=breakers.reduce(function(s,b){return s+bt[b].kwh;},0);
+      var totalCost=breakers.reduce(function(s,b){return s+bt[b].cost;},0);
+      ctx='S&D Factory Energy Data (Nov 2025, 18 days):\n';
+      ctx+='Total Energy: '+totalKwh.toFixed(1)+' kWh\n';
+      ctx+='Total Cost: LKR '+Math.round(totalCost).toLocaleString()+'\n';
+      ctx+='Breaker Ranking (highest to lowest):\n';
+      breakers.forEach(function(b,i){ctx+=(i+1)+'. '+b+': '+bt[b].kwh.toFixed(1)+' kWh, LKR '+Math.round(bt[b].cost).toLocaleString()+' ('+(totalKwh>0?(bt[b].kwh/totalKwh*100).toFixed(1):0)+'%)\n';});
+      ctx+='Lanka Electricity Company tariff: Peak LKR 39/kWh (17-22h), Day LKR 19/kWh (9-17h), Off-Peak LKR 16.50/kWh (22-9h)\n';
+    }
+    var sys='You are an Energy Intelligence Agent for S&D factory. You are part of the Dirisdigiware platform by Venora Lanka Power Panels (Pvt) Ltd. You have access to real breaker-level energy data. Analyze and provide clear actionable insights.\n\n'+ctx+'\nAnswer concisely. Use actual numbers. Flag waste or anomalies. Give practical recommendations.';
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:sys,messages:aiHist})});
+    var d=await resp.json();
+    var reply=d.content&&d.content[0]&&d.content[0].text||'Could not get response. Please try again.';
+    reply=reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    aiHist.push({role:'assistant',content:d.content&&d.content[0]&&d.content[0].text||reply});
+    document.getElementById('aiTyp').classList.remove('show');
+    addMsg('ai',reply);
+  }catch(e){document.getElementById('aiTyp').classList.remove('show');addMsg('ai','Connection error. Please try again.');}
+  aiThink=false;document.getElementById('aiSend').disabled=false;
+}
+
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -81,6 +121,39 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .bar-inner{height:100%;border-radius:2px}
 .footer{text-align:center;padding:14px;font-size:10px;color:#1E2840;border-top:1px solid var(--border)}
 @keyframes blk{0%,100%{opacity:1}50%{opacity:.1}}
+
+.ai-fab{position:fixed;bottom:28px;right:28px;z-index:1000;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#0099A8,#00C8D4);border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,200,212,.4);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s}
+.ai-fab:hover{transform:scale(1.08)}
+.ai-panel{position:fixed;bottom:94px;right:28px;z-index:1000;width:380px;height:520px;background:#0C1018;border:1px solid #192030;border-radius:16px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.7);transform:scale(.92) translateY(20px);opacity:0;pointer-events:none;transition:all .25s cubic-bezier(.34,1.56,.64,1)}
+.ai-panel.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+.ai-hdr{padding:12px 14px;border-bottom:1px solid #192030;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ai-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#0099A8,#00C8D4);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.ai-tn{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#E8EBF5;flex:1}
+.ai-st{font-size:9px;color:#4CAF7D;letter-spacing:1px}
+.ai-cl{background:none;border:none;color:#5A6280;cursor:pointer;font-size:18px;padding:2px 4px}
+.ai-cl:hover{color:#E8EBF5}
+.ai-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ai-msgs::-webkit-scrollbar{width:3px}.ai-msgs::-webkit-scrollbar-thumb{background:#192030;border-radius:2px}
+.ai-msg{max-width:88%}.ai-msg.user{align-self:flex-end}.ai-msg.ai{align-self:flex-start}
+.ai-bbl{padding:9px 12px;border-radius:10px;font-size:11px;line-height:1.6}
+.ai-msg.user .ai-bbl{background:#0099A8;color:#fff;border-radius:10px 10px 2px 10px}
+.ai-msg.ai .ai-bbl{background:#141B2A;border:1px solid #192030;color:#C8D0E8;border-radius:10px 10px 10px 2px}
+.ai-msg.ai .ai-bbl strong{color:#00C8D4}
+.ai-typ{display:none;align-self:flex-start;padding:9px 12px;background:#141B2A;border:1px solid #192030;border-radius:10px}
+.ai-typ.show{display:flex;align-items:center;gap:4px}
+.ai-typ span{width:5px;height:5px;border-radius:50%;background:#00C8D4;animation:td .9s infinite}
+.ai-typ span:nth-child(2){animation-delay:.18s}.ai-typ span:nth-child(3){animation-delay:.36s}
+@keyframes td{0%,80%,100%{transform:scale(1);opacity:.4}40%{transform:scale(1.3);opacity:1}}
+.ai-sugs{padding:0 12px 8px;display:flex;flex-wrap:wrap;gap:5px}
+.ai-sug{background:#141B2A;border:1px solid #192030;border-radius:20px;padding:4px 9px;font-size:10px;color:#8890B0;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.ai-sug:hover{border-color:#00C8D4;color:#00C8D4}
+.ai-inp-row{padding:8px 12px;border-top:1px solid #192030;display:flex;gap:7px;flex-shrink:0}
+.ai-inp{flex:1;background:#141B2A;border:1px solid #192030;border-radius:9px;padding:8px 11px;font-size:11px;color:#E8EBF5;outline:none;font-family:'Inter',sans-serif;resize:none;height:36px}
+.ai-inp:focus{border-color:#0099A8}
+.ai-inp::placeholder{color:#3A4560}
+.ai-send{background:linear-gradient(135deg,#0099A8,#00C8D4);border:none;border-radius:9px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#000;flex-shrink:0}
+.ai-send:disabled{opacity:.4;cursor:not-allowed}
+
 </style>
 </head>
 <body>
@@ -194,7 +267,7 @@ async function loadAll(){
     var d1=await r1.json();
     var r2=await fetch(API+'/api/production/list?site_id='+siteId+'&from='+from+'&to='+to,{headers:hdr});
     var d2=await r2.json();
-    renderAll(d1,d2);
+    lastData=d1;renderAll(d1,d2);
   }catch(e){console.error(e);}
 }
 function renderAll(cmp,prod){
@@ -232,6 +305,30 @@ function renderAll(cmp,prod){
   dch('rankDonut');CH['rankDonut']=new Chart(document.getElementById('rankDonut').getContext('2d'),{type:'doughnut',data:{labels:sorted,datasets:[{data:sorted.map(function(b){return breaker_totals[b]&&breaker_totals[b].kwh||0;}),backgroundColor:sorted.map(function(_,i){return ca(COLORS[i%COLORS.length],.85);}),borderColor:'#0C1018',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{display:true,position:'right',labels:{color:'rgba(255,255,255,.45)',font:{size:9},padding:8,boxWidth:9,usePointStyle:true}}}}});
 }
 </script>
+
+<button class="ai-fab" onclick="toggleAI()" title="AI Energy Agent">&#9889;</button>
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-hdr">
+    <div class="ai-av">&#9889;</div>
+    <div style="flex:1"><div class="ai-tn">S&amp;D Energy Agent</div><div class="ai-st">Online &middot; Dirisdigiware AI</div></div>
+    <button class="ai-cl" onclick="toggleAI()">&#x2715;</button>
+  </div>
+  <div class="ai-msgs" id="aiMsgs">
+    <div class="ai-msg ai"><div class="ai-bbl">Hello! I am your Energy Intelligence Agent for S&amp;D. I have access to your breaker data, energy costs, and production data. Ask me anything about your factory energy performance.</div></div>
+  </div>
+  <div class="ai-typ" id="aiTyp"><span></span><span></span><span></span></div>
+  <div class="ai-sugs" id="aiSugs">
+    <button class="ai-sug" onclick="askSug(this)">Which breaker uses most energy?</button>
+    <button class="ai-sug" onclick="askSug(this)">What is our total cost?</button>
+    <button class="ai-sug" onclick="askSug(this)">Any waste detected?</button>
+    <button class="ai-sug" onclick="askSug(this)">Compare breakers</button>
+  </div>
+  <div class="ai-inp-row">
+    <textarea class="ai-inp" id="aiInp" placeholder="Ask about your energy data..." onkeydown="aiKey(event)"></textarea>
+    <button class="ai-send" id="aiSend" onclick="sendAI()">&#9658;</button>
+  </div>
+</div>
+
 </body>
 </html>
 
