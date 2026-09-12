@@ -170,7 +170,9 @@ window.onload=function(){setTimeout(function(){
   if(!s){window.location.href='login.html';return;}
   user=JSON.parse(s);
   document.getElementById('coName').textContent=user.company||user.site_name||'S&D';
-  loadAll();},500);};
+  document.getElementById('fromDate').value='2025-11-01';
+  document.getElementById('toDate').value='2025-11-18';
+  setTimeout(function(){loadAll();},300);},500);};
 function logout(){sessionStorage.removeItem('user');window.location.href='login.html';}
 function setP(p,btn){
   document.querySelectorAll('.pb').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');
@@ -232,4 +234,5 @@ function renderAll(cmp,prod){
 </script>
 </body>
 </html>
+
 
