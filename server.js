@@ -14,7 +14,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/login.html',      (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/dashboard.html',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
 app.get('/production.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'production.html')));
+app.get('/sd-dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'sd-dashboard.html')));
 app.get('/comparison.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'comparison.html')));
+app.get('/sd-dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'sd-dashboard.html')));
 app.get('/comparison.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'comparison.html')));
 app.get('/upload.html',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'upload.html')));
 
@@ -53,6 +55,8 @@ async function initDB() {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, async () => { await initDB(); console.log('Server on port ' + PORT); });
+
+
 
 
 
