@@ -33,7 +33,7 @@ async function sendAI(){
       ctx+='Lanka Electricity Company tariff: Peak LKR 39/kWh (17-22h), Day LKR 19/kWh (9-17h), Off-Peak LKR 16.50/kWh (22-9h)\n';
     }
     var sys='You are an Energy Intelligence Agent for S&D factory. You are part of the Dirisdigiware platform by Venora Lanka Power Panels (Pvt) Ltd. You have access to real breaker-level energy data. Analyze and provide clear actionable insights.\n\n'+ctx+'\nAnswer concisely. Use actual numbers. Flag waste or anomalies. Give practical recommendations.';
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:sys,messages:aiHist})});
+    var resp=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:aiHist,context:sys})});
     var d=await resp.json();
     var reply=d.content&&d.content[0]&&d.content[0].text||'Could not get response. Please try again.';
     reply=reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
@@ -353,7 +353,7 @@ async function sendAI(){
       br.slice(0,5).forEach(function(b){ctx+=b+' '+bt[b].kwh.toFixed(0)+' kWh, ';});
       ctx+='LEC tariff: Peak LKR 39 (17-22h), Day LKR 19 (9-17h), Off-Peak LKR 16.50 (22-9h).';
     }
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,system:'You are an Energy Intelligence Agent for S&D factory by Venora Lanka Power Panels. '+ctx+' Answer concisely with actual numbers. Flag waste. Give recommendations.',messages:aiHist})});
+    var resp=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:aiHist,context:'You are an Energy Intelligence Agent for S&D factory by Venora Lanka Power Panels. '+ctx+' Answer concisely with actual numbers. Flag waste. Give recommendations.'})});
     var d=await resp.json();
     var reply=(d.content&&d.content[0]&&d.content[0].text)||'Could not get response.';
     reply=reply.replace(/\*\*(.*?)\*\*/g,'<strong></strong>').replace(/\n/g,'<br>');
@@ -365,6 +365,7 @@ async function sendAI(){
 }
 </script></body>
 </html>
+
 
 
 
