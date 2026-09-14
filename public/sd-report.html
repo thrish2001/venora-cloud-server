@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>S&D Monthly Energy Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* SCREEN STYLES */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#07090F;color:#E8EBF5;min-height:100vh}
+
+.screen-header{background:#0C1018;border-bottom:1px solid #192030;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#00C8D4}
+.brand span{color:#fff}
+.controls{display:flex;align-items:center;gap:10px;padding:12px 24px;background:#0C1018;border-bottom:1px solid #192030;flex-wrap:wrap}
+.ctrl-lbl{font-size:9px;font-weight:600;color:#5A6280;letter-spacing:1.5px;text-transform:uppercase}
+.dt{background:#141B26;border:1px solid #192030;border-radius:7px;padding:6px 10px;font-size:12px;color:#E8EBF5;outline:none;font-family:'Inter',sans-serif}
+.btn{border:none;border-radius:7px;padding:7px 18px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif}
+.btn-load{background:linear-gradient(135deg,#0088A8,#00C8D4);color:#000}
+.btn-pdf{background:linear-gradient(135deg,#C9A347,#E8C87A);color:#000}
+.btn-back{background:transparent;border:1px solid #192030;color:#5A6280;padding:7px 14px}
+.btn-back:hover{border-color:#00C8D4;color:#00C8D4}
+.loading{text-align:center;padding:60px;color:#5A6280}
+
+/* REPORT CONTAINER - visible on screen */
+#reportContainer{padding:24px;max-width:960px;margin:0 auto}
+
+/* ====================================================
+   PRINT / PDF STYLES
+   ==================================================== */
+@media print {
+  body{background:#fff;color:#000;font-size:10px}
+  .screen-header,.controls{display:none !important}
+  #reportContainer{padding:0;max-width:100%}
+
+  .rp{background:#fff !important;color:#000 !important;border:none !important;box-shadow:none !important;margin:0 !important;padding:0 !important}
+
+  .rp-cover{background:#003344 !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;page-break-after:always}
+  .rp-section{page-break-inside:avoid;margin-bottom:20px}
+  .rp-page-break{page-break-before:always}
+
+  .kpi-g{display:grid !important;grid-template-columns:repeat(4,1fr) !important;gap:8px !important}
+  .kpi-c{background:#f0f8ff !important;border:1px solid #cce4f0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .kpi-v{color:#003344 !important}
+
+  .tbl th{background:#003344 !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tbl tr:nth-child(even) td{background:#f5faff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+  .rec-item{border-left:3px solid #003344 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+  canvas{max-width:100% !important;height:auto !important}
+}
+
+/* REPORT STYLES - both screen and print */
+.rp{background:#0C1018;border-radius:12px;overflow:hidden;margin-bottom:20px}
+
+/* Cover page */
+.rp-cover{background:linear-gradient(135deg,#03101F 0%,#041525 50%,#020D18 100%);padding:48px 40px;position:relative;overflow:hidden}
+.rp-cover::before{content:'';position:absolute;top:-80px;right:-80px;width:300px;height:300px;border-radius:50%;border:1px solid rgba(0,200,212,.1)}
+.rp-cover::after{content:'';position:absolute;bottom:-60px;left:-60px;width:200px;height:200px;border-radius:50%;border:1px solid rgba(0,200,212,.08)}
+.cover-pre{font-size:9px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:rgba(0,200,212,.7);margin-bottom:12px}
+.cover-title{font-family:'Rajdhani',sans-serif;font-size:42px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:6px}
+.cover-title span{color:#00C8D4}
+.cover-sub{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:36px}
+.cover-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:480px}
+.cover-m{background:rgba(0,200,212,.06);border:1px solid rgba(0,200,212,.15);padding:10px 14px;border-radius:8px}
+.cover-ml{font-size:8px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(0,200,212,.6);margin-bottom:3px}
+.cover-mv{font-size:13px;font-weight:600;color:#fff}
+.cover-logo{position:absolute;top:40px;right:40px;font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:rgba(0,200,212,.5)}
+.cover-logo span{color:rgba(255,255,255,.3)}
+
+/* Section headers */
+.sec-hdr{padding:14px 20px;border-bottom:1px solid #192030;display:flex;align-items:center;gap:10px;background:#0E1520}
+.sec-hdr-line{width:3px;height:18px;background:#00C8D4;border-radius:2px;flex-shrink:0}
+.sec-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#00C8D4}
+.sec-sub{font-size:10px;color:#5A6280;margin-left:auto}
+.sec-body{padding:20px}
+
+/* KPI grid */
+.kpi-g{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:0}
+.kpi-c{background:#141B2A;border:1px solid #192030;border-radius:8px;padding:14px;position:relative;overflow:hidden}
+.kpi-c::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi-c.c1::after{background:#00C8D4}.kpi-c.c2::after{background:#C9A347}.kpi-c.c3::after{background:#E05555}.kpi-c.c4::after{background:#4CAF7D}
+.kpi-l{font-size:8px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#5A6280;margin-bottom:5px}
+.kpi-v{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;line-height:1}
+.kpi-c.c1 .kpi-v{color:#00C8D4}.kpi-c.c2 .kpi-v{color:#C9A347}.kpi-c.c3 .kpi-v{color:#E05555}.kpi-c.c4 .kpi-v{color:#4CAF7D}
+.kpi-s{font-size:9px;color:#5A6280;margin-top:3px}
+
+/* Charts */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:#0E1520;border:1px solid #192030;border-radius:8px;padding:14px}
+.chart-t{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:#00C8D4;margin-bottom:10px}
+.chart-s{font-size:9px;color:#5A6280;margin-bottom:10px;margin-top:-6px}
+
+/* Breaker table */
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{background:#141B2A;color:#8890B0;font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:9px 12px;text-align:left;border-bottom:1px solid #192030}
+.tbl td{padding:9px 12px;border-bottom:1px solid rgba(25,32,48,.5);color:#C8D0E8}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(0,200,212,.03)}
+.td-name{font-weight:600;color:#E8EBF5;display:flex;align-items:center;gap:6px}
+.td-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.td-mono{font-family:'JetBrains Mono',monospace}
+.td-bar{width:80px}
+.bar-w{height:4px;background:#192030;border-radius:2px;overflow:hidden}
+.bar-f{height:100%;border-radius:2px;background:linear-gradient(90deg,#00C8D4,#0AF)}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.b-high{background:rgba(224,85,85,.15);color:#E05555;border:1px solid rgba(224,85,85,.25)}
+.b-mid{background:rgba(232,146,79,.15);color:#E8924F;border:1px solid rgba(232,146,79,.25)}
+.b-low{background:rgba(76,175,125,.15);color:#4CAF7D;border:1px solid rgba(76,175,125,.25)}
+
+/* Tariff table */
+.tariff-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.tariff-c{padding:14px;border-radius:8px;border:1px solid}
+.tariff-c.peak{background:rgba(224,85,85,.08);border-color:rgba(224,85,85,.2)}
+.tariff-c.day{background:rgba(201,163,71,.08);border-color:rgba(201,163,71,.2)}
+.tariff-c.off{background:rgba(76,175,125,.08);border-color:rgba(76,175,125,.2)}
+.tariff-period{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px}
+.tariff-c.peak .tariff-period{color:#E05555}.tariff-c.day .tariff-period{color:#C9A347}.tariff-c.off .tariff-period{color:#4CAF7D}
+.tariff-time{font-size:10px;color:#5A6280;margin-bottom:8px}
+.tariff-rate{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700}
+.tariff-c.peak .tariff-rate{color:#E05555}.tariff-c.day .tariff-rate{color:#C9A347}.tariff-c.off .tariff-rate{color:#4CAF7D}
+.tariff-cost{font-family:'JetBrains Mono',monospace;font-size:11px;color:#8890B0;margin-top:4px}
+
+/* Recommendations */
+.rec-list{display:flex;flex-direction:column;gap:10px}
+.rec-item{background:#0E1520;border:1px solid #192030;border-left:3px solid #00C8D4;padding:13px 15px;border-radius:0 8px 8px 0}
+.rec-item.warning{border-left-color:#E05555}
+.rec-item.success{border-left-color:#4CAF7D}
+.rec-title{font-size:12px;font-weight:600;color:#E8EBF5;margin-bottom:4px}
+.rec-body{font-size:10px;color:#8890B0;line-height:1.65}
+.rec-saving{font-family:'JetBrains Mono',monospace;font-size:11px;color:#4CAF7D;margin-top:5px;font-weight:600}
+
+/* Footer */
+.rp-footer{padding:14px 20px;border-top:1px solid #192030;display:flex;justify-content:space-between;align-items:center;background:#0A0F18}
+.footer-l{font-size:9px;color:#5A6280}
+.footer-r{font-size:9px;color:rgba(0,200,212,.4);font-family:'JetBrains Mono',monospace}
+
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(0,200,212,.2),transparent);margin:16px 0}
+</style>
+</head>
+<body>
+
+<div class="screen-header">
+  <div class="brand"><span>DIRIS</span>DIGIWARE &nbsp;·&nbsp; <span style="font-size:13px;color:#5A6280;font-family:'Inter',sans-serif;font-weight:400">S&D Monthly Energy Report</span></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-back" onclick="history.back()">← Back</button>
+    <button class="btn btn-load" onclick="loadReport()">Load Report</button>
+    <button class="btn btn-pdf" onclick="downloadPDF()">⬇ Download PDF</button>
+  </div>
+</div>
+
+<div class="controls">
+  <span class="ctrl-lbl">Report Month</span>
+  <input type="date" class="dt" id="fromDate" value="2025-11-01">
+  <span class="ctrl-lbl">To</span>
+  <input type="date" class="dt" id="toDate" value="2025-11-18">
+</div>
+
+<div id="reportContainer">
+  <div class="loading" id="loadingMsg">Set the date range and click Load Report</div>
+  <div id="report" style="display:none"></div>
+</div>
+
+<script>
+const API='https://venora-cloud-server-production.up.railway.app';
+const COLORS=['#00C8D4','#C9A347','#E05555','#4CAF7D','#8B6FE8','#E8924F','#E86FA8','#4F9EE8','#FF6B6B','#4ECDC4','#45B7D1','#96CEB4'];
+let user=null, CH={};
+
+function ca(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return `rgba(${r},${g},${b},${a})`;}
+function fN(n,d=0){if(!n&&n!==0)return'--';n=parseFloat(n);if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return n.toFixed(d);}
+function fL(n){return'LKR '+fN(n,0);}
+
+window.onload=function(){
+  const s=sessionStorage.getItem('user');
+  if(!s){window.location.href='login.html';return;}
+  user=JSON.parse(s);
+  loadReport();
+};
+
+function downloadPDF(){
+  document.title='SD_Energy_Report_'+document.getElementById('fromDate').value+'_to_'+document.getElementById('toDate').value;
+  window.print();
+}
+
+async function loadReport(){
+  const siteId=user.site_id;
+  const from=document.getElementById('fromDate').value;
+  const to=document.getElementById('toDate').value;
+  const token=user.token||'';
+  const hdr={Authorization:'Bearer '+token};
+
+  document.getElementById('loadingMsg').textContent='Generating report...';
+  document.getElementById('loadingMsg').style.display='block';
+  document.getElementById('report').style.display='none';
+
+  try{
+    const [r1,r2]=await Promise.all([
+      fetch(`${API}/api/analytics/breaker-comparison?site_id=${siteId}&from=${from}&to=${to}&group_by=daily`,{headers:hdr}),
+      fetch(`${API}/api/production/list?site_id=${siteId}&from=${from}&to=${to}`,{headers:hdr})
+    ]);
+    const cmp=await r1.json();
+    const prod=await r2.json();
+    renderReport(cmp,prod,from,to);
+  }catch(e){
+    document.getElementById('loadingMsg').textContent='Error loading data: '+e.message;
+  }
+}
+
+function renderReport(cmp,prod,from,to){
+  const{periods,breakers,period_data,breaker_totals}=cmp;
+  const show=breakers.filter(b=>(breaker_totals[b]?.kwh||0)>0);
+  const sorted=[...show].sort((a,b)=>(breaker_totals[b]?.kwh||0)-(breaker_totals[a]?.kwh||0));
+  const totalKwh=show.reduce((s,b)=>s+(breaker_totals[b]?.kwh||0),0);
+  const totalCost=show.reduce((s,b)=>s+(breaker_totals[b]?.cost||0),0);
+  const peakCost=totalCost*0.30,dayCost=totalCost*0.40,offCost=totalCost*0.30;
+  const peakSave=Math.round(totalCost*0.28);
+  const prodRows=Array.isArray(prod)?prod:(prod.production||[]);
+  const totalProd=prodRows.reduce((s,r)=>s+(parseFloat(r.units_produced)||0),0);
+  const topBreaker=sorted[0]||'--';
+  const topKwh=breaker_totals[topBreaker]?.kwh||0;
+  const labels=periods.map(p=>new Date(p).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}));
+  const dailyKwh=periods.map(p=>show.reduce((s,b)=>s+(period_data[p]?.[b]?.kwh||0),0));
+  const dailyCost=periods.map(p=>show.reduce((s,b)=>s+(period_data[p]?.[b]?.cost||0),0));
+  const fromD=new Date(from).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  const toD=new Date(to).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+
+  Object.values(CH).forEach(c=>c.destroy());CH={};
+
+  const report=document.getElementById('report');
+  report.innerHTML=`
+  <!-- COVER -->
+  <div class="rp">
+    <div class="rp-cover">
+      <div class="cover-logo"><span>DIRIS</span>DIGIWARE</div>
+      <div class="cover-pre">Dirisdigiware Energy Intelligence Platform</div>
+      <div class="cover-title">Monthly Energy<br><span>Report</span></div>
+      <div class="cover-sub">Comprehensive energy analysis and cost breakdown</div>
+      <div class="cover-meta">
+        <div class="cover-m"><div class="cover-ml">Company</div><div class="cover-mv">S&D Factory</div></div>
+        <div class="cover-m"><div class="cover-ml">Report Period</div><div class="cover-mv">${fromD} — ${toD}</div></div>
+        <div class="cover-m"><div class="cover-ml">Generated</div><div class="cover-mv">${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}</div></div>
+        <div class="cover-m"><div class="cover-ml">Prepared by</div><div class="cover-mv">Venora Lanka Power Panels</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <div class="rp rp-section">
+    <div class="sec-hdr"><div class="sec-hdr-line"></div><div class="sec-title">Executive Summary</div><div class="sec-sub">${fromD} to ${toD}</div></div>
+    <div class="sec-body">
+      <div class="kpi-g">
+        <div class="kpi-c c1"><div class="kpi-l">Total Consumption</div><div class="kpi-v">${fN(totalKwh,1)} kWh</div><div class="kpi-s">${periods.length} days monitored</div></div>
+        <div class="kpi-c c2"><div class="kpi-l">Total Cost</div><div class="kpi-v">${fL(totalCost)}</div><div class="kpi-s">LEC tariff applied</div></div>
+        <div class="kpi-c c3"><div class="kpi-l">Peak Period Cost</div><div class="kpi-v">${fL(peakCost)}</div><div class="kpi-s">17:00 — 22:00</div></div>
+        <div class="kpi-c c4"><div class="kpi-l">Total Production</div><div class="kpi-v">${fN(totalProd,0)} units</div><div class="kpi-s">${prodRows.length} shift records</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="kpi-g">
+        <div class="kpi-c c1"><div class="kpi-l">Highest Consumer</div><div class="kpi-v" style="font-size:14px">${topBreaker}</div><div class="kpi-s">${(topKwh/totalKwh*100).toFixed(1)}% of total</div></div>
+        <div class="kpi-c c2"><div class="kpi-l">Off-Peak Cost</div><div class="kpi-v">${fL(offCost)}</div><div class="kpi-s">22:00 — 09:00</div></div>
+        <div class="kpi-c c3"><div class="kpi-l">Active Breakers</div><div class="kpi-v">${show.length}</div><div class="kpi-s">of ${breakers.length} total</div></div>
+        <div class="kpi-c c4"><div class="kpi-l">Avg Daily Cost</div><div class="kpi-v">${fL(totalCost/periods.length)}</div><div class="kpi-s">per day</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENERGY CONSUMPTION CHARTS -->
+  <div class="rp rp-section">
+    <div class="sec-hdr"><div class="sec-hdr-line"></div><div class="sec-title">Energy Consumption</div><div class="sec-sub">Daily breakdown</div></div>
+    <div class="sec-body">
+      <div class="chart-row">
+        <div class="chart-box"><div class="chart-t">Daily Energy Consumption (kWh)</div><div class="chart-s">Total across all breakers per day</div><div style="height:200px"><canvas id="rc1"></canvas></div></div>
+        <div class="chart-box"><div class="chart-t">Daily Electricity Cost (LKR)</div><div class="chart-s">Lanka Electricity Company tariff applied</div><div style="height:200px"><canvas id="rc2"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TARIFF BREAKDOWN -->
+  <div class="rp rp-section">
+    <div class="sec-hdr"><div class="sec-hdr-line"></div><div class="sec-title">Lanka Electricity Company Tariff Analysis</div></div>
+    <div class="sec-body">
+      <div class="tariff-row">
+        <div class="tariff-c peak">
+          <div class="tariff-period">Peak Period</div>
+          <div class="tariff-time">17:00 — 22:00 (5 hours/day)</div>
+          <div class="tariff-rate">LKR 39.00/kWh</div>
+          <div class="tariff-cost">Estimated: ${fL(peakCost)}</div>
+        </div>
+        <div class="tariff-c day">
+          <div class="tariff-period">Day Period</div>
+          <div class="tariff-time">09:00 — 17:00 (8 hours/day)</div>
+          <div class="tariff-rate">LKR 19.00/kWh</div>
+          <div class="tariff-cost">Estimated: ${fL(dayCost)}</div>
+        </div>
+        <div class="tariff-c off">
+          <div class="tariff-period">Off-Peak Period</div>
+          <div class="tariff-time">22:00 — 09:00 (11 hours/day)</div>
+          <div class="tariff-rate">LKR 16.50/kWh</div>
+          <div class="tariff-cost">Estimated: ${fL(offCost)}</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="chart-row">
+        <div class="chart-box"><div class="chart-t">Cost Distribution by Tariff Period</div><div style="height:200px"><canvas id="rc3"></canvas></div></div>
+        <div class="chart-box"><div class="chart-t">Breaker Energy Share</div><div style="height:200px"><canvas id="rc4"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BREAKER ANALYSIS -->
+  <div class="rp rp-section rp-page-break">
+    <div class="sec-hdr"><div class="sec-hdr-line"></div><div class="sec-title">Breaker Analysis</div><div class="sec-sub">${show.length} active breakers</div></div>
+    <div class="sec-body">
+      <table class="tbl">
+        <thead><tr><th>Rank</th><th>Breaker / Load</th><th>Total kWh</th><th>Total Cost</th><th>% of Total</th><th>Consumption</th><th>Status</th></tr></thead>
+        <tbody id="rTbl"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="rp rp-section">
+    <div class="sec-hdr"><div class="sec-hdr-line"></div><div class="sec-title">Recommendations</div><div class="sec-sub">Action items to reduce costs</div></div>
+    <div class="sec-body">
+      <div class="rec-list">
+        <div class="rec-item warning">
+          <div class="rec-title">&#9312; Shift High Loads to Off-Peak Hours</div>
+          <div class="rec-body"><strong>${topBreaker}</strong> is the highest consumer at ${fN(topKwh,1)} kWh (${(topKwh/totalKwh*100).toFixed(1)}% of total). Moving this load from peak (LKR 39/kWh) to off-peak (LKR 16.50/kWh) can reduce cost by up to 58% for those units.</div>
+          <div class="rec-saving">Estimated saving: ${fL(peakSave)} per period</div>
+        </div>
+        <div class="rec-item warning">
+          <div class="rec-title">&#9313; Avoid Peak Tariff Period (17:00 — 22:00)</div>
+          <div class="rec-body">Schedule all heavy production tasks before 17:00 or after 22:00. The peak rate (LKR 39/kWh) is 2.36x the off-peak rate (LKR 16.50/kWh). Even shifting 2 hours of production daily can produce significant monthly savings.</div>
+          <div class="rec-saving">Peak cost this period: ${fL(peakCost)}</div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-title">&#9314; Monitor Top 3 Breakers Daily</div>
+          <div class="rec-body">The top 3 breakers — ${sorted.slice(0,3).join(', ')} — account for ${sorted.slice(0,3).reduce((s,b)=>s+(breaker_totals[b]?.kwh||0)/totalKwh*100,0).toFixed(1)}% of total energy. Daily monitoring of these circuits will help detect anomalies early before they impact the monthly bill.</div>
+        </div>
+        <div class="rec-item success">
+          <div class="rec-title">&#9315; Switch Off During Non-Production Hours</div>
+          <div class="rec-body">Ensure all non-essential loads are switched off during weekends, holidays, and shift breaks. Even a 5% reduction in idle consumption can significantly reduce the monthly bill.</div>
+          <div class="rec-saving">Estimated saving: ${fL(Math.round(totalCost*0.05))} — ${fL(Math.round(totalCost*0.10))} per period</div>
+        </div>
+        <div class="rec-item success">
+          <div class="rec-title">&#9316; Production vs Energy Benchmarking</div>
+          <div class="rec-body">Use production data to calculate energy cost per unit produced. Target shifts with the lowest kWh-per-unit as the benchmark. Flag shifts that exceed this benchmark for investigation.</div>
+          <div class="rec-saving">Current production: ${fN(totalProd,0)} units · Energy per unit: ${totalProd>0?(totalKwh/totalProd).toFixed(3):'--'} kWh/unit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="rp">
+    <div class="rp-footer">
+      <div class="footer-l">Dirisdigiware Energy Intelligence Platform &nbsp;·&nbsp; Venora Lanka Power Panels (Pvt) Ltd &nbsp;·&nbsp; Biyagama, Sri Lanka</div>
+      <div class="footer-r">Generated: ${new Date().toLocaleString('en-GB')}</div>
+    </div>
+  </div>
+  `;
+
+  // Build table
+  const tbody=document.getElementById('rTbl');
+  const maxKwh=breaker_totals[sorted[0]]?.kwh||1;
+  sorted.forEach((b,i)=>{
+    const kwh=breaker_totals[b]?.kwh||0,cost=breaker_totals[b]?.cost||0;
+    const pct=(kwh/totalKwh*100).toFixed(1);
+    const bar=(kwh/maxKwh*100).toFixed(1);
+    const color=COLORS[i%COLORS.length];
+    const cls=i<sorted.length/3?'b-high':i<sorted.length*2/3?'b-mid':'b-low';
+    const badge=i<sorted.length/3?'High':i<sorted.length*2/3?'Medium':'Low';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-family:'JetBrains Mono',monospace;font-weight:600;color:#5A6280">${i+1}</td>
+      <td><div class="td-name"><span class="td-dot" style="background:${color}"></span>${b}</div></td>
+      <td class="td-mono">${fN(kwh,1)} kWh</td>
+      <td class="td-mono" style="color:#C9A347">${fL(cost)}</td>
+      <td class="td-mono">${pct}%</td>
+      <td class="td-bar"><div class="bar-w"><div class="bar-f" style="width:${bar}%;background:${color}"></div></div></td>
+      <td><span class="badge ${cls}">${badge}</span></td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Charts
+  const opts=(isCost)=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0C1018',borderColor:'#192030',borderWidth:1,titleColor:'#C9A347',bodyColor:'#E8EBF5',padding:8,cornerRadius:4}},scales:{x:{grid:{color:'rgba(25,32,48,.8)'},ticks:{color:'#5A6280',font:{size:8},maxTicksLimit:12}},y:{grid:{color:'rgba(25,32,48,.8)'},ticks:{color:'#5A6280',font:{size:8},callback:v=>isCost?'LKR '+fN(v):fN(v)+' kWh'}}}});
+
+  CH.rc1=new Chart(document.getElementById('rc1').getContext('2d'),{type:'bar',data:{labels,datasets:[{data:dailyKwh,backgroundColor:ca('#00C8D4',.7),borderColor:'#00C8D4',borderWidth:1,borderRadius:3,borderSkipped:false}]},options:opts(false)});
+  CH.rc2=new Chart(document.getElementById('rc2').getContext('2d'),{type:'bar',data:{labels,datasets:[{data:dailyCost,backgroundColor:ca('#C9A347',.7),borderColor:'#C9A347',borderWidth:1,borderRadius:3,borderSkipped:false}]},options:opts(true)});
+  CH.rc3=new Chart(document.getElementById('rc3').getContext('2d'),{type:'doughnut',data:{labels:['Peak (17-22h)','Day (9-17h)','Off-Peak (22-9h)'],datasets:[{data:[peakCost,dayCost,offCost],backgroundColor:['rgba(224,85,85,.85)','rgba(201,163,71,.85)','rgba(76,175,125,.85)'],borderColor:'#0C1018',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:true,position:'bottom',labels:{color:'rgba(255,255,255,.4)',font:{size:9},padding:10,boxWidth:8,usePointStyle:true}}}}});
+  CH.rc4=new Chart(document.getElementById('rc4').getContext('2d'),{type:'doughnut',data:{labels:sorted.slice(0,8),datasets:[{data:sorted.slice(0,8).map(b=>breaker_totals[b]?.kwh||0),backgroundColor:sorted.slice(0,8).map((_,i)=>ca(COLORS[i%COLORS.length],.85)),borderColor:'#0C1018',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{display:true,position:'right',labels:{color:'rgba(255,255,255,.4)',font:{size:8},padding:8,boxWidth:7,usePointStyle:true}}}}});
+
+  document.getElementById('loadingMsg').style.display='none';
+  document.getElementById('report').style.display='block';
+}
+</script>
+</body>
+</html>
