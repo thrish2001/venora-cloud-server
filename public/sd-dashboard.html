@@ -44,7 +44,89 @@ async function sendAI(){
   aiThink=false;document.getElementById('aiSend').disabled=false;
 }
 
-</script>
+function generateReport(){
+  if(!lastData){alert('Please load data first.');return;}
+  document.getElementById('reportOverlay').classList.add('open');
+  buildReport();
+}
+function buildReport(){
+  var bt=lastData.breaker_totals||{};
+  var periods=lastData.periods||[];
+  var pd=lastData.period_data||{};
+  var br=Object.keys(bt).filter(function(b){return bt[b]&&bt[b].kwh>0;}).sort(function(a,b){return bt[b].kwh-bt[a].kwh;});
+  var tk=br.reduce(function(s,b){return s+bt[b].kwh;},0);
+  var tc=br.reduce(function(s,b){return s+bt[b].cost;},0);
+  var peakC=Math.round(tc*0.3),dayC=Math.round(tc*0.4),offC=Math.round(tc*0.3);
+  var top=br[0]||'--',topK=bt[top]&&bt[top].kwh||0;
+  var from=document.getElementById('fromDate').value;
+  var to=document.getElementById('toDate').value;
+  var maxK=bt[br[0]]&&bt[br[0]].kwh||1;
+  var COLORS=['#00C8D4','#C9A347','#E05555','#4CAF7D','#8B6FE8','#E8924F','#E86FA8','#4F9EE8','#FF6B6B','#4ECDC4','#45B7D1','#96CEB4'];
+
+  var tblRows=br.map(function(b,i){
+    var kwh=bt[b].kwh||0,cost=bt[b].cost||0,pct=(kwh/tk*100).toFixed(1),bar=(kwh/maxK*100).toFixed(1);
+    var cls=i<br.length/3?'b-high':i<br.length*2/3?'b-mid':'b-low';
+    var badge=i<br.length/3?'High':i<br.length*2/3?'Medium':'Low';
+    var color=COLORS[i%COLORS.length];
+    return '<tr><td style="font-weight:600;color:#5A6280">'+(i+1)+'</td>'+
+      '<td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+color+';margin-right:6px"></span>'+b+'</td>'+
+      '<td style="font-family:JetBrains Mono,monospace">'+kwh.toFixed(1)+' kWh</td>'+
+      '<td style="font-family:JetBrains Mono,monospace;color:#C9A347">LKR '+Math.round(cost).toLocaleString()+'</td>'+
+      '<td>'+pct+'%</td>'+
+      '<td><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:10px;'+
+      (i<br.length/3?'background:rgba(224,85,85,.15);color:#E05555;border:1px solid rgba(224,85,85,.25)':
+       i<br.length*2/3?'background:rgba(232,146,79,.15);color:#E8924F;border:1px solid rgba(232,146,79,.25)':
+       'background:rgba(76,175,125,.15);color:#4CAF7D;border:1px solid rgba(76,175,125,.25)')+'">'+badge+'</span></td></tr>';
+  }).join('');
+
+  document.getElementById('reportContent').innerHTML =
+    '<div class="r-cover">'+
+    '<div style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:rgba(0,200,212,.4);margin-bottom:10px">DIRISDIGIWARE</div>'+
+    '<div class="r-title">Monthly Energy<br><span>Report</span></div>'+
+    '<div class="r-sub">Comprehensive energy analysis and cost breakdown</div>'+
+    '<div class="r-meta">'+
+    '<div class="r-m"><div class="r-ml">Company</div><div class="r-mv">S&amp;D Factory</div></div>'+
+    '<div class="r-m"><div class="r-ml">Period</div><div class="r-mv">'+from+' to '+to+'</div></div>'+
+    '<div class="r-m"><div class="r-ml">Prepared by</div><div class="r-mv">Venora Lanka Power Panels</div></div>'+
+    '</div></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Executive Summary</div>'+
+    '<div class="r-kpi-g">'+
+    '<div class="r-kpi c1"><div class="r-kpi-l">Total Energy</div><div class="r-kpi-v">'+tk.toFixed(0)+' kWh</div></div>'+
+    '<div class="r-kpi c2"><div class="r-kpi-l">Total Cost</div><div class="r-kpi-v">LKR '+Math.round(tc).toLocaleString()+'</div></div>'+
+    '<div class="r-kpi c3"><div class="r-kpi-l">Peak Cost</div><div class="r-kpi-v">LKR '+peakC.toLocaleString()+'</div></div>'+
+    '<div class="r-kpi c4"><div class="r-kpi-l">Active Breakers</div><div class="r-kpi-v">'+br.length+'</div></div>'+
+    '</div></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Lanka Electricity Company Tariff Breakdown</div>'+
+    '<div class="r-tariff">'+
+    '<div class="r-tariff-c peak"><div class="r-tariff-p">Peak Period</div><div class="r-tariff-t">17:00 to 22:00</div><div class="r-tariff-r">LKR 39.00/kWh</div><div class="r-tariff-cost">Est. LKR '+peakC.toLocaleString()+'</div></div>'+
+    '<div class="r-tariff-c day"><div class="r-tariff-p">Day Period</div><div class="r-tariff-t">09:00 to 17:00</div><div class="r-tariff-r">LKR 19.00/kWh</div><div class="r-tariff-cost">Est. LKR '+dayC.toLocaleString()+'</div></div>'+
+    '<div class="r-tariff-c off"><div class="r-tariff-p">Off-Peak Period</div><div class="r-tariff-t">22:00 to 09:00</div><div class="r-tariff-r">LKR 16.50/kWh</div><div class="r-tariff-cost">Est. LKR '+offC.toLocaleString()+'</div></div>'+
+    '</div></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Breaker Analysis ('+br.length+' active breakers)</div>'+
+    '<table class="r-tbl"><thead><tr><th>Rank</th><th>Breaker</th><th>Total kWh</th><th>Total Cost</th><th>% Share</th><th>Status</th></tr></thead>'+
+    '<tbody>'+tblRows+'</tbody></table></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Cost Reduction Recommendations</div>'+
+    '<div class="r-rec warn"><div class="r-rec-t">1. Shift '+top+' to Off-Peak Hours</div>'+
+    '<div class="r-rec-b">'+top+' uses '+(topK/tk*100).toFixed(1)+'% of total energy. Moving from peak (LKR 39/kWh) to off-peak (LKR 16.50/kWh) saves 58% per unit.</div>'+
+    '<div class="r-rec-s">Estimated saving: LKR '+Math.round(tc*0.28).toLocaleString()+' per period</div></div>'+
+    '<div class="r-rec warn"><div class="r-rec-t">2. Avoid Peak Tariff Period (17:00-22:00)</div>'+
+    '<div class="r-rec-b">Schedule all heavy production before 17:00 or after 22:00. Peak cost this period: LKR '+peakC.toLocaleString()+'.</div></div>'+
+    '<div class="r-rec good"><div class="r-rec-t">3. Switch Off Loads During Non-Production Hours</div>'+
+    '<div class="r-rec-b">Ensure non-essential loads are off during breaks, weekends, and holidays.</div>'+
+    '<div class="r-rec-s">Estimated saving: LKR '+Math.round(tc*0.07).toLocaleString()+' per period</div></div>'+
+    '<div class="r-rec good"><div class="r-rec-t">4. Monitor Top 3 Breakers Daily</div>'+
+    '<div class="r-rec-b">'+br.slice(0,3).join(', ')+' account for '+(br.slice(0,3).reduce(function(s,b){return s+(bt[b].kwh/tk*100);},0)).toFixed(1)+'% of total energy. Daily monitoring detects anomalies early.</div></div>'+
+    '</div>'+
+
+    '<div style="border-top:1px solid #192030;padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;font-size:9px;color:#5A6280">'+
+    '<span>Dirisdigiware Energy Intelligence Platform &middot; Venora Lanka Power Panels (Pvt) Ltd</span>'+
+    '<span>Generated: '+new Date().toLocaleString('en-GB')+'</span></div>';
+}
+document.addEventListener('click',function(e){if(e.target===document.getElementById('reportOverlay'))document.getElementById('reportOverlay').classList.remove('open');});</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -154,7 +236,55 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .ai-send{background:linear-gradient(135deg,#0099A8,#00C8D4);border:none;border-radius:9px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#000;flex-shrink:0}
 .ai-send:disabled{opacity:.4;cursor:not-allowed}
 
-</style>
+.report-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;align-items:center;justify-content:center}
+.report-overlay.open{display:flex}
+.report-modal{background:#0C1018;border:1px solid #192030;border-radius:16px;width:90vw;max-width:860px;max-height:92vh;overflow-y:auto;padding:28px;position:relative}
+.report-modal::-webkit-scrollbar{width:5px}.report-modal::-webkit-scrollbar-thumb{background:#192030}
+.report-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#5A6280;font-size:22px;cursor:pointer}
+.report-close:hover{color:#fff}
+.r-cover{background:linear-gradient(135deg,#03101F,#041525);padding:28px;border-radius:10px;margin-bottom:16px;position:relative}
+.r-title{font-family:"Rajdhani",sans-serif;font-size:34px;font-weight:700;color:#fff;margin-bottom:4px}
+.r-title span{color:#00C8D4}
+.r-sub{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:20px}
+.r-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.r-m{background:rgba(0,200,212,.06);border:1px solid rgba(0,200,212,.15);padding:9px 12px;border-radius:7px}
+.r-ml{font-size:8px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(0,200,212,.6);margin-bottom:2px}
+.r-mv{font-size:12px;font-weight:600;color:#fff}
+.r-sec{margin-bottom:16px}
+.r-sec-hdr{font-family:"Rajdhani",sans-serif;font-size:14px;font-weight:700;color:#00C8D4;border-bottom:1px solid #192030;padding-bottom:7px;margin-bottom:12px}
+.r-kpi-g{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.r-kpi{background:#141B2A;border:1px solid #192030;border-radius:7px;padding:11px;position:relative;overflow:hidden}
+.r-kpi::after{content:"";position:absolute;top:0;left:0;right:0;height:2px}
+.r-kpi.c1::after{background:#00C8D4}.r-kpi.c2::after{background:#C9A347}.r-kpi.c3::after{background:#E05555}.r-kpi.c4::after{background:#4CAF7D}
+.r-kpi-l{font-size:7px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#5A6280;margin-bottom:4px}
+.r-kpi-v{font-family:"Rajdhani",sans-serif;font-size:20px;font-weight:700}
+.r-kpi.c1 .r-kpi-v{color:#00C8D4}.r-kpi.c2 .r-kpi-v{color:#C9A347}.r-kpi.c3 .r-kpi-v{color:#E05555}.r-kpi.c4 .r-kpi-v{color:#4CAF7D}
+.r-tbl{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px}
+.r-tbl th{background:#141B2A;color:#8890B0;font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:8px 10px;text-align:left;border-bottom:1px solid #192030}
+.r-tbl td{padding:8px 10px;border-bottom:1px solid rgba(25,32,48,.5);color:#C8D0E8}
+.r-tbl tr:last-child td{border-bottom:none}
+.r-rec{background:#0E1520;border:1px solid #192030;border-left:3px solid #00C8D4;padding:11px 13px;border-radius:0 7px 7px 0;margin-bottom:8px}
+.r-rec.warn{border-left-color:#E05555}.r-rec.good{border-left-color:#4CAF7D}
+.r-rec-t{font-size:11px;font-weight:600;color:#E8EBF5;margin-bottom:3px}
+.r-rec-b{font-size:10px;color:#8890B0;line-height:1.6}
+.r-rec-s{font-family:"JetBrains Mono",monospace;font-size:10px;color:#4CAF7D;margin-top:4px;font-weight:600}
+.r-tariff{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.r-tariff-c{padding:12px;border-radius:7px;border:1px solid}
+.r-tariff-c.peak{background:rgba(224,85,85,.08);border-color:rgba(224,85,85,.2)}
+.r-tariff-c.day{background:rgba(201,163,71,.08);border-color:rgba(201,163,71,.2)}
+.r-tariff-c.off{background:rgba(76,175,125,.08);border-color:rgba(76,175,125,.2)}
+.r-tariff-p{font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
+.r-tariff-c.peak .r-tariff-p{color:#E05555}.r-tariff-c.day .r-tariff-p{color:#C9A347}.r-tariff-c.off .r-tariff-p{color:#4CAF7D}
+.r-tariff-t{font-size:9px;color:#5A6280;margin-bottom:6px}
+.r-tariff-r{font-family:"Rajdhani",sans-serif;font-size:16px;font-weight:700}
+.r-tariff-c.peak .r-tariff-r{color:#E05555}.r-tariff-c.day .r-tariff-r{color:#C9A347}.r-tariff-c.off .r-tariff-r{color:#4CAF7D}
+.r-tariff-cost{font-family:"JetBrains Mono",monospace;font-size:10px;color:#8890B0;margin-top:3px}
+.r-print-btn{background:linear-gradient(135deg,#9A7A2E,#C9A347);border:none;border-radius:8px;padding:9px 22px;font-size:12px;font-weight:700;color:#000;cursor:pointer;font-family:"Inter",sans-serif;margin-top:16px;width:100%}
+@media print{
+  .screen-header,.controls,.tabs,.kpi-row,.section,.ai-fab,.ai-panel,.report-close,.r-print-btn{display:none!important}
+  .report-overlay{position:static!important;background:none!important;display:block!important}
+  .report-modal{width:100%!important;max-height:none!important;border:none!important;padding:0!important}
+}</style>
 </head>
 <body>
 <div class="topbar">
@@ -180,6 +310,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <button class="pb" onclick="setP('week',this)">Last 7 Days</button>
   <div class="sep"></div>
   <button class="btn-load" onclick="loadAll()">Load Data</button>
+  <button class="btn-load" style="background:linear-gradient(135deg,#9A7A2E,#C9A347)" onclick="generateReport()">&#128196; Generate Report</button>
 </div>
 <div class="main">
   <div class="tabs">
@@ -309,7 +440,89 @@ function renderAll(cmp,prod){
   sorted.forEach(function(b,i){var kwh=breaker_totals[b]&&breaker_totals[b].kwh||0,cost=breaker_totals[b]&&breaker_totals[b].cost||0,pct=totalKwh>0?(kwh/totalKwh*100).toFixed(1):0,bar=(kwh/(breaker_totals[sorted[0]]&&breaker_totals[sorted[0]].kwh||1)*100).toFixed(1),cls=i<sorted.length/3?'r-high':i<sorted.length*2/3?'r-mid':'r-low',badge=cls==='r-high'?'High - Investigate':cls==='r-mid'?'Monitor':'Efficient';var el=document.createElement('div');el.className='rank-item '+cls;el.innerHTML='<div class="rank-no">'+(i+1)+'</div><div class="rank-info"><div class="rank-name">'+b+'</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:'+bar+'%"></div></div><div class="rank-pct">'+pct+'% of total</div><span class="rank-badge">'+badge+'</span></div><div class="rank-vals"><div class="rank-kwh">'+fN(kwh,1)+' kWh</div><div class="rank-cost">'+fL(cost)+'</div></div>';rankList.appendChild(el);});
   dch('rankDonut');CH['rankDonut']=new Chart(document.getElementById('rankDonut').getContext('2d'),{type:'doughnut',data:{labels:sorted,datasets:[{data:sorted.map(function(b){return breaker_totals[b]&&breaker_totals[b].kwh||0;}),backgroundColor:sorted.map(function(_,i){return ca(COLORS[i%COLORS.length],.85);}),borderColor:'#0C1018',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{display:true,position:'right',labels:{color:'rgba(255,255,255,.45)',font:{size:9},padding:8,boxWidth:9,usePointStyle:true}}}}});
 }
-</script>
+function generateReport(){
+  if(!lastData){alert('Please load data first.');return;}
+  document.getElementById('reportOverlay').classList.add('open');
+  buildReport();
+}
+function buildReport(){
+  var bt=lastData.breaker_totals||{};
+  var periods=lastData.periods||[];
+  var pd=lastData.period_data||{};
+  var br=Object.keys(bt).filter(function(b){return bt[b]&&bt[b].kwh>0;}).sort(function(a,b){return bt[b].kwh-bt[a].kwh;});
+  var tk=br.reduce(function(s,b){return s+bt[b].kwh;},0);
+  var tc=br.reduce(function(s,b){return s+bt[b].cost;},0);
+  var peakC=Math.round(tc*0.3),dayC=Math.round(tc*0.4),offC=Math.round(tc*0.3);
+  var top=br[0]||'--',topK=bt[top]&&bt[top].kwh||0;
+  var from=document.getElementById('fromDate').value;
+  var to=document.getElementById('toDate').value;
+  var maxK=bt[br[0]]&&bt[br[0]].kwh||1;
+  var COLORS=['#00C8D4','#C9A347','#E05555','#4CAF7D','#8B6FE8','#E8924F','#E86FA8','#4F9EE8','#FF6B6B','#4ECDC4','#45B7D1','#96CEB4'];
+
+  var tblRows=br.map(function(b,i){
+    var kwh=bt[b].kwh||0,cost=bt[b].cost||0,pct=(kwh/tk*100).toFixed(1),bar=(kwh/maxK*100).toFixed(1);
+    var cls=i<br.length/3?'b-high':i<br.length*2/3?'b-mid':'b-low';
+    var badge=i<br.length/3?'High':i<br.length*2/3?'Medium':'Low';
+    var color=COLORS[i%COLORS.length];
+    return '<tr><td style="font-weight:600;color:#5A6280">'+(i+1)+'</td>'+
+      '<td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+color+';margin-right:6px"></span>'+b+'</td>'+
+      '<td style="font-family:JetBrains Mono,monospace">'+kwh.toFixed(1)+' kWh</td>'+
+      '<td style="font-family:JetBrains Mono,monospace;color:#C9A347">LKR '+Math.round(cost).toLocaleString()+'</td>'+
+      '<td>'+pct+'%</td>'+
+      '<td><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:10px;'+
+      (i<br.length/3?'background:rgba(224,85,85,.15);color:#E05555;border:1px solid rgba(224,85,85,.25)':
+       i<br.length*2/3?'background:rgba(232,146,79,.15);color:#E8924F;border:1px solid rgba(232,146,79,.25)':
+       'background:rgba(76,175,125,.15);color:#4CAF7D;border:1px solid rgba(76,175,125,.25)')+'">'+badge+'</span></td></tr>';
+  }).join('');
+
+  document.getElementById('reportContent').innerHTML =
+    '<div class="r-cover">'+
+    '<div style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:rgba(0,200,212,.4);margin-bottom:10px">DIRISDIGIWARE</div>'+
+    '<div class="r-title">Monthly Energy<br><span>Report</span></div>'+
+    '<div class="r-sub">Comprehensive energy analysis and cost breakdown</div>'+
+    '<div class="r-meta">'+
+    '<div class="r-m"><div class="r-ml">Company</div><div class="r-mv">S&amp;D Factory</div></div>'+
+    '<div class="r-m"><div class="r-ml">Period</div><div class="r-mv">'+from+' to '+to+'</div></div>'+
+    '<div class="r-m"><div class="r-ml">Prepared by</div><div class="r-mv">Venora Lanka Power Panels</div></div>'+
+    '</div></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Executive Summary</div>'+
+    '<div class="r-kpi-g">'+
+    '<div class="r-kpi c1"><div class="r-kpi-l">Total Energy</div><div class="r-kpi-v">'+tk.toFixed(0)+' kWh</div></div>'+
+    '<div class="r-kpi c2"><div class="r-kpi-l">Total Cost</div><div class="r-kpi-v">LKR '+Math.round(tc).toLocaleString()+'</div></div>'+
+    '<div class="r-kpi c3"><div class="r-kpi-l">Peak Cost</div><div class="r-kpi-v">LKR '+peakC.toLocaleString()+'</div></div>'+
+    '<div class="r-kpi c4"><div class="r-kpi-l">Active Breakers</div><div class="r-kpi-v">'+br.length+'</div></div>'+
+    '</div></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Lanka Electricity Company Tariff Breakdown</div>'+
+    '<div class="r-tariff">'+
+    '<div class="r-tariff-c peak"><div class="r-tariff-p">Peak Period</div><div class="r-tariff-t">17:00 to 22:00</div><div class="r-tariff-r">LKR 39.00/kWh</div><div class="r-tariff-cost">Est. LKR '+peakC.toLocaleString()+'</div></div>'+
+    '<div class="r-tariff-c day"><div class="r-tariff-p">Day Period</div><div class="r-tariff-t">09:00 to 17:00</div><div class="r-tariff-r">LKR 19.00/kWh</div><div class="r-tariff-cost">Est. LKR '+dayC.toLocaleString()+'</div></div>'+
+    '<div class="r-tariff-c off"><div class="r-tariff-p">Off-Peak Period</div><div class="r-tariff-t">22:00 to 09:00</div><div class="r-tariff-r">LKR 16.50/kWh</div><div class="r-tariff-cost">Est. LKR '+offC.toLocaleString()+'</div></div>'+
+    '</div></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Breaker Analysis ('+br.length+' active breakers)</div>'+
+    '<table class="r-tbl"><thead><tr><th>Rank</th><th>Breaker</th><th>Total kWh</th><th>Total Cost</th><th>% Share</th><th>Status</th></tr></thead>'+
+    '<tbody>'+tblRows+'</tbody></table></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Cost Reduction Recommendations</div>'+
+    '<div class="r-rec warn"><div class="r-rec-t">1. Shift '+top+' to Off-Peak Hours</div>'+
+    '<div class="r-rec-b">'+top+' uses '+(topK/tk*100).toFixed(1)+'% of total energy. Moving from peak (LKR 39/kWh) to off-peak (LKR 16.50/kWh) saves 58% per unit.</div>'+
+    '<div class="r-rec-s">Estimated saving: LKR '+Math.round(tc*0.28).toLocaleString()+' per period</div></div>'+
+    '<div class="r-rec warn"><div class="r-rec-t">2. Avoid Peak Tariff Period (17:00-22:00)</div>'+
+    '<div class="r-rec-b">Schedule all heavy production before 17:00 or after 22:00. Peak cost this period: LKR '+peakC.toLocaleString()+'.</div></div>'+
+    '<div class="r-rec good"><div class="r-rec-t">3. Switch Off Loads During Non-Production Hours</div>'+
+    '<div class="r-rec-b">Ensure non-essential loads are off during breaks, weekends, and holidays.</div>'+
+    '<div class="r-rec-s">Estimated saving: LKR '+Math.round(tc*0.07).toLocaleString()+' per period</div></div>'+
+    '<div class="r-rec good"><div class="r-rec-t">4. Monitor Top 3 Breakers Daily</div>'+
+    '<div class="r-rec-b">'+br.slice(0,3).join(', ')+' account for '+(br.slice(0,3).reduce(function(s,b){return s+(bt[b].kwh/tk*100);},0)).toFixed(1)+'% of total energy. Daily monitoring detects anomalies early.</div></div>'+
+    '</div>'+
+
+    '<div style="border-top:1px solid #192030;padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;font-size:9px;color:#5A6280">'+
+    '<span>Dirisdigiware Energy Intelligence Platform &middot; Venora Lanka Power Panels (Pvt) Ltd</span>'+
+    '<span>Generated: '+new Date().toLocaleString('en-GB')+'</span></div>';
+}
+document.addEventListener('click',function(e){if(e.target===document.getElementById('reportOverlay'))document.getElementById('reportOverlay').classList.remove('open');});</script>
 
 <button class="ai-fab" onclick="toggleAI()" title="AI Energy Agent">&#9889;</button>
 <div class="ai-panel" id="aiPanel">
@@ -407,7 +620,89 @@ function analyzeQuery(q){
 
   return "S&D Energy Summary:<br><strong>"+tk.toFixed(0)+" kWh</strong> &middot; <strong>LKR "+Math.round(tc).toLocaleString()+"</strong><br>Highest: "+top+" ("+(topK/tk*100).toFixed(1)+"%)<br>Active breakers: "+br.length+"<br><br>Ask me:<br>&bull; How to reduce costs?<br>&bull; Which breaker uses most energy?<br>&bull; Where is energy wasted?<br>&bull; Compare all breakers<br>&bull; Peak tariff costs?";
 }
-</script>
+function generateReport(){
+  if(!lastData){alert('Please load data first.');return;}
+  document.getElementById('reportOverlay').classList.add('open');
+  buildReport();
+}
+function buildReport(){
+  var bt=lastData.breaker_totals||{};
+  var periods=lastData.periods||[];
+  var pd=lastData.period_data||{};
+  var br=Object.keys(bt).filter(function(b){return bt[b]&&bt[b].kwh>0;}).sort(function(a,b){return bt[b].kwh-bt[a].kwh;});
+  var tk=br.reduce(function(s,b){return s+bt[b].kwh;},0);
+  var tc=br.reduce(function(s,b){return s+bt[b].cost;},0);
+  var peakC=Math.round(tc*0.3),dayC=Math.round(tc*0.4),offC=Math.round(tc*0.3);
+  var top=br[0]||'--',topK=bt[top]&&bt[top].kwh||0;
+  var from=document.getElementById('fromDate').value;
+  var to=document.getElementById('toDate').value;
+  var maxK=bt[br[0]]&&bt[br[0]].kwh||1;
+  var COLORS=['#00C8D4','#C9A347','#E05555','#4CAF7D','#8B6FE8','#E8924F','#E86FA8','#4F9EE8','#FF6B6B','#4ECDC4','#45B7D1','#96CEB4'];
+
+  var tblRows=br.map(function(b,i){
+    var kwh=bt[b].kwh||0,cost=bt[b].cost||0,pct=(kwh/tk*100).toFixed(1),bar=(kwh/maxK*100).toFixed(1);
+    var cls=i<br.length/3?'b-high':i<br.length*2/3?'b-mid':'b-low';
+    var badge=i<br.length/3?'High':i<br.length*2/3?'Medium':'Low';
+    var color=COLORS[i%COLORS.length];
+    return '<tr><td style="font-weight:600;color:#5A6280">'+(i+1)+'</td>'+
+      '<td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+color+';margin-right:6px"></span>'+b+'</td>'+
+      '<td style="font-family:JetBrains Mono,monospace">'+kwh.toFixed(1)+' kWh</td>'+
+      '<td style="font-family:JetBrains Mono,monospace;color:#C9A347">LKR '+Math.round(cost).toLocaleString()+'</td>'+
+      '<td>'+pct+'%</td>'+
+      '<td><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:10px;'+
+      (i<br.length/3?'background:rgba(224,85,85,.15);color:#E05555;border:1px solid rgba(224,85,85,.25)':
+       i<br.length*2/3?'background:rgba(232,146,79,.15);color:#E8924F;border:1px solid rgba(232,146,79,.25)':
+       'background:rgba(76,175,125,.15);color:#4CAF7D;border:1px solid rgba(76,175,125,.25)')+'">'+badge+'</span></td></tr>';
+  }).join('');
+
+  document.getElementById('reportContent').innerHTML =
+    '<div class="r-cover">'+
+    '<div style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:rgba(0,200,212,.4);margin-bottom:10px">DIRISDIGIWARE</div>'+
+    '<div class="r-title">Monthly Energy<br><span>Report</span></div>'+
+    '<div class="r-sub">Comprehensive energy analysis and cost breakdown</div>'+
+    '<div class="r-meta">'+
+    '<div class="r-m"><div class="r-ml">Company</div><div class="r-mv">S&amp;D Factory</div></div>'+
+    '<div class="r-m"><div class="r-ml">Period</div><div class="r-mv">'+from+' to '+to+'</div></div>'+
+    '<div class="r-m"><div class="r-ml">Prepared by</div><div class="r-mv">Venora Lanka Power Panels</div></div>'+
+    '</div></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Executive Summary</div>'+
+    '<div class="r-kpi-g">'+
+    '<div class="r-kpi c1"><div class="r-kpi-l">Total Energy</div><div class="r-kpi-v">'+tk.toFixed(0)+' kWh</div></div>'+
+    '<div class="r-kpi c2"><div class="r-kpi-l">Total Cost</div><div class="r-kpi-v">LKR '+Math.round(tc).toLocaleString()+'</div></div>'+
+    '<div class="r-kpi c3"><div class="r-kpi-l">Peak Cost</div><div class="r-kpi-v">LKR '+peakC.toLocaleString()+'</div></div>'+
+    '<div class="r-kpi c4"><div class="r-kpi-l">Active Breakers</div><div class="r-kpi-v">'+br.length+'</div></div>'+
+    '</div></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Lanka Electricity Company Tariff Breakdown</div>'+
+    '<div class="r-tariff">'+
+    '<div class="r-tariff-c peak"><div class="r-tariff-p">Peak Period</div><div class="r-tariff-t">17:00 to 22:00</div><div class="r-tariff-r">LKR 39.00/kWh</div><div class="r-tariff-cost">Est. LKR '+peakC.toLocaleString()+'</div></div>'+
+    '<div class="r-tariff-c day"><div class="r-tariff-p">Day Period</div><div class="r-tariff-t">09:00 to 17:00</div><div class="r-tariff-r">LKR 19.00/kWh</div><div class="r-tariff-cost">Est. LKR '+dayC.toLocaleString()+'</div></div>'+
+    '<div class="r-tariff-c off"><div class="r-tariff-p">Off-Peak Period</div><div class="r-tariff-t">22:00 to 09:00</div><div class="r-tariff-r">LKR 16.50/kWh</div><div class="r-tariff-cost">Est. LKR '+offC.toLocaleString()+'</div></div>'+
+    '</div></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Breaker Analysis ('+br.length+' active breakers)</div>'+
+    '<table class="r-tbl"><thead><tr><th>Rank</th><th>Breaker</th><th>Total kWh</th><th>Total Cost</th><th>% Share</th><th>Status</th></tr></thead>'+
+    '<tbody>'+tblRows+'</tbody></table></div>'+
+
+    '<div class="r-sec"><div class="r-sec-hdr">Cost Reduction Recommendations</div>'+
+    '<div class="r-rec warn"><div class="r-rec-t">1. Shift '+top+' to Off-Peak Hours</div>'+
+    '<div class="r-rec-b">'+top+' uses '+(topK/tk*100).toFixed(1)+'% of total energy. Moving from peak (LKR 39/kWh) to off-peak (LKR 16.50/kWh) saves 58% per unit.</div>'+
+    '<div class="r-rec-s">Estimated saving: LKR '+Math.round(tc*0.28).toLocaleString()+' per period</div></div>'+
+    '<div class="r-rec warn"><div class="r-rec-t">2. Avoid Peak Tariff Period (17:00-22:00)</div>'+
+    '<div class="r-rec-b">Schedule all heavy production before 17:00 or after 22:00. Peak cost this period: LKR '+peakC.toLocaleString()+'.</div></div>'+
+    '<div class="r-rec good"><div class="r-rec-t">3. Switch Off Loads During Non-Production Hours</div>'+
+    '<div class="r-rec-b">Ensure non-essential loads are off during breaks, weekends, and holidays.</div>'+
+    '<div class="r-rec-s">Estimated saving: LKR '+Math.round(tc*0.07).toLocaleString()+' per period</div></div>'+
+    '<div class="r-rec good"><div class="r-rec-t">4. Monitor Top 3 Breakers Daily</div>'+
+    '<div class="r-rec-b">'+br.slice(0,3).join(', ')+' account for '+(br.slice(0,3).reduce(function(s,b){return s+(bt[b].kwh/tk*100);},0)).toFixed(1)+'% of total energy. Daily monitoring detects anomalies early.</div></div>'+
+    '</div>'+
+
+    '<div style="border-top:1px solid #192030;padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;font-size:9px;color:#5A6280">'+
+    '<span>Dirisdigiware Energy Intelligence Platform &middot; Venora Lanka Power Panels (Pvt) Ltd</span>'+
+    '<span>Generated: '+new Date().toLocaleString('en-GB')+'</span></div>';
+}
+document.addEventListener('click',function(e){if(e.target===document.getElementById('reportOverlay'))document.getElementById('reportOverlay').classList.remove('open');});</script>
 <style>
 .ai-fab{position:fixed;bottom:28px;right:28px;z-index:1000;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#0099A8,#00C8D4);border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,200,212,.4);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s}
 .ai-fab:hover{transform:scale(1.08)}
@@ -435,7 +730,55 @@ function analyzeQuery(q){
 .ai-inp::placeholder{color:#3A4560}
 .ai-send{background:linear-gradient(135deg,#0099A8,#00C8D4);border:none;border-radius:9px;width:36px;height:36px;cursor:pointer;color:#000;font-size:14px;flex-shrink:0}
 .ai-send:disabled{opacity:.4}
-</style><button class="ai-fab" onclick="toggleAI()">&#9889;</button>
+.report-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;align-items:center;justify-content:center}
+.report-overlay.open{display:flex}
+.report-modal{background:#0C1018;border:1px solid #192030;border-radius:16px;width:90vw;max-width:860px;max-height:92vh;overflow-y:auto;padding:28px;position:relative}
+.report-modal::-webkit-scrollbar{width:5px}.report-modal::-webkit-scrollbar-thumb{background:#192030}
+.report-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#5A6280;font-size:22px;cursor:pointer}
+.report-close:hover{color:#fff}
+.r-cover{background:linear-gradient(135deg,#03101F,#041525);padding:28px;border-radius:10px;margin-bottom:16px;position:relative}
+.r-title{font-family:"Rajdhani",sans-serif;font-size:34px;font-weight:700;color:#fff;margin-bottom:4px}
+.r-title span{color:#00C8D4}
+.r-sub{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:20px}
+.r-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.r-m{background:rgba(0,200,212,.06);border:1px solid rgba(0,200,212,.15);padding:9px 12px;border-radius:7px}
+.r-ml{font-size:8px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(0,200,212,.6);margin-bottom:2px}
+.r-mv{font-size:12px;font-weight:600;color:#fff}
+.r-sec{margin-bottom:16px}
+.r-sec-hdr{font-family:"Rajdhani",sans-serif;font-size:14px;font-weight:700;color:#00C8D4;border-bottom:1px solid #192030;padding-bottom:7px;margin-bottom:12px}
+.r-kpi-g{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.r-kpi{background:#141B2A;border:1px solid #192030;border-radius:7px;padding:11px;position:relative;overflow:hidden}
+.r-kpi::after{content:"";position:absolute;top:0;left:0;right:0;height:2px}
+.r-kpi.c1::after{background:#00C8D4}.r-kpi.c2::after{background:#C9A347}.r-kpi.c3::after{background:#E05555}.r-kpi.c4::after{background:#4CAF7D}
+.r-kpi-l{font-size:7px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#5A6280;margin-bottom:4px}
+.r-kpi-v{font-family:"Rajdhani",sans-serif;font-size:20px;font-weight:700}
+.r-kpi.c1 .r-kpi-v{color:#00C8D4}.r-kpi.c2 .r-kpi-v{color:#C9A347}.r-kpi.c3 .r-kpi-v{color:#E05555}.r-kpi.c4 .r-kpi-v{color:#4CAF7D}
+.r-tbl{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px}
+.r-tbl th{background:#141B2A;color:#8890B0;font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:8px 10px;text-align:left;border-bottom:1px solid #192030}
+.r-tbl td{padding:8px 10px;border-bottom:1px solid rgba(25,32,48,.5);color:#C8D0E8}
+.r-tbl tr:last-child td{border-bottom:none}
+.r-rec{background:#0E1520;border:1px solid #192030;border-left:3px solid #00C8D4;padding:11px 13px;border-radius:0 7px 7px 0;margin-bottom:8px}
+.r-rec.warn{border-left-color:#E05555}.r-rec.good{border-left-color:#4CAF7D}
+.r-rec-t{font-size:11px;font-weight:600;color:#E8EBF5;margin-bottom:3px}
+.r-rec-b{font-size:10px;color:#8890B0;line-height:1.6}
+.r-rec-s{font-family:"JetBrains Mono",monospace;font-size:10px;color:#4CAF7D;margin-top:4px;font-weight:600}
+.r-tariff{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.r-tariff-c{padding:12px;border-radius:7px;border:1px solid}
+.r-tariff-c.peak{background:rgba(224,85,85,.08);border-color:rgba(224,85,85,.2)}
+.r-tariff-c.day{background:rgba(201,163,71,.08);border-color:rgba(201,163,71,.2)}
+.r-tariff-c.off{background:rgba(76,175,125,.08);border-color:rgba(76,175,125,.2)}
+.r-tariff-p{font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
+.r-tariff-c.peak .r-tariff-p{color:#E05555}.r-tariff-c.day .r-tariff-p{color:#C9A347}.r-tariff-c.off .r-tariff-p{color:#4CAF7D}
+.r-tariff-t{font-size:9px;color:#5A6280;margin-bottom:6px}
+.r-tariff-r{font-family:"Rajdhani",sans-serif;font-size:16px;font-weight:700}
+.r-tariff-c.peak .r-tariff-r{color:#E05555}.r-tariff-c.day .r-tariff-r{color:#C9A347}.r-tariff-c.off .r-tariff-r{color:#4CAF7D}
+.r-tariff-cost{font-family:"JetBrains Mono",monospace;font-size:10px;color:#8890B0;margin-top:3px}
+.r-print-btn{background:linear-gradient(135deg,#9A7A2E,#C9A347);border:none;border-radius:8px;padding:9px 22px;font-size:12px;font-weight:700;color:#000;cursor:pointer;font-family:"Inter",sans-serif;margin-top:16px;width:100%}
+@media print{
+  .screen-header,.controls,.tabs,.kpi-row,.section,.ai-fab,.ai-panel,.report-close,.r-print-btn{display:none!important}
+  .report-overlay{position:static!important;background:none!important;display:block!important}
+  .report-modal{width:100%!important;max-height:none!important;border:none!important;padding:0!important}
+}</style><button class="ai-fab" onclick="toggleAI()">&#9889;</button>
 <div class="ai-panel" id="aiPanel">
   <div class="ai-hdr">
     <div class="ai-av">&#9889;</div>
@@ -457,8 +800,15 @@ function analyzeQuery(q){
     <textarea class="ai-inp" id="aiInp" placeholder="Ask about your energy data..." onkeydown="aiKey(event)"></textarea>
     <button class="ai-send" id="aiSend" onclick="sendAI()">&#9658;</button>
   </div>
+</div><div class="report-overlay" id="reportOverlay">
+  <div class="report-modal" id="reportModal">
+    <button class="report-close" onclick="document.getElementById('reportOverlay').classList.remove('open')">&#x2715;</button>
+    <div id="reportContent"><div style="text-align:center;padding:40px;color:#5A6280">Loading report...</div></div>
+    <button class="r-print-btn" onclick="window.print()">&#128196; Download / Print as PDF</button>
+  </div>
 </div></body>
 </html>
+
 
 
 
