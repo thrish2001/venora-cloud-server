@@ -21,6 +21,7 @@ app.get('/comparison.html', (req, res) => res.sendFile(path.join(__dirname, 'pub
 app.get('/upload.html',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'upload.html')));
 
 // â”€â”€ API ROUTES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+app.post('/api/ai/chat', async (req, res) => { try { const { messages, context } = req.body; const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 500, system: context, messages }) }); const d = await r.json(); res.json(d); } catch(e) { res.status(500).json({ error: e.message }); } });
 app.use('/api/upload',     require('./routes/upload'));
 app.use('/api/analytics',  require('./routes/analytics'));
 app.use('/api/sites',      require('./routes/sites'));
@@ -55,6 +56,7 @@ async function initDB() {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, async () => { await initDB(); console.log('Server on port ' + PORT); });
+
 
 
 
