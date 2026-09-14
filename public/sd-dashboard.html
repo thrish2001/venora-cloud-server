@@ -348,52 +348,59 @@ function sendAI(){
   },700);
 }
 function analyzeQuery(q){
-  if(!lastData){return 'Please click Load Data first, then ask me again.';}
+  if(!lastData){return "Please click Load Data first, then ask me again.";}
   var bt=lastData.breaker_totals||{};
   var br=Object.keys(bt).filter(function(b){return bt[b]&&bt[b].kwh>0;}).sort(function(a,b){return bt[b].kwh-bt[a].kwh;});
-  if(!br.length){return 'No data for selected period.';}
+  if(!br.length){return "No data for selected period.";}
   var tk=br.reduce(function(s,b){return s+bt[b].kwh;},0);
   var tc=br.reduce(function(s,b){return s+bt[b].cost;},0);
   var top=br[0],topK=bt[top].kwh,topC=bt[top].cost;
-  var low=br[br.length-1],lowK=bt[low].kwh;
+  var low=br[br.length-1],lowK=bt[low].kwh,lowC=bt[low].cost;
   var t3=br.slice(0,3),t3p=t3.reduce(function(s,b){return s+(bt[b].kwh/tk*100);},0);
+  var peakSave=Math.round(tc*0.28),idleSave=Math.round(tc*0.08),totalSave=Math.round(tc*0.36);
+
   if(q.match(/highest|most|top|largest/)){
-    return '<strong>'+top+'</strong> is the highest consumer at <strong>'+topK.toFixed(0)+' kWh</strong> (LKR '+Math.round(topC).toLocaleString()+') — '+(topK/tk*100).toFixed(1)+'% of total. Investigate if it runs during peak hours 17:00-22:00.';}
+    if(q.match(/cost|expensive/)){return "<strong>"+top+"</strong> has the highest cost at <strong>LKR "+Math.round(topC).toLocaleString()+"</strong> ("+topK.toFixed(0)+" kWh) — "+(topK/tk*100).toFixed(1)+"% of total. Shift this load to off-peak hours 22:00-09:00 to reduce cost by 58%.";}
+    return "<strong>"+top+"</strong> is the highest consumer at <strong>"+topK.toFixed(0)+" kWh</strong> (LKR "+Math.round(topC).toLocaleString()+") — "+(topK/tk*100).toFixed(1)+"% of total. This is the first breaker to investigate for waste.";}
+
   if(q.match(/lowest|least|efficient/)){
-    return '<strong>'+low+'</strong> is the lowest at <strong>'+lowK.toFixed(0)+' kWh</strong> ('+(lowK/tk*100).toFixed(1)+'%) — operating efficiently.';}
+    return "<strong>"+low+"</strong> is the most efficient at <strong>"+lowK.toFixed(0)+" kWh</strong> (LKR "+Math.round(lowC).toLocaleString()+") — "+(lowK/tk*100).toFixed(1)+"% of total. Use this as a benchmark for other breakers.";}
+
   if(q.match(/total|overall|summary|how much/)){
-    return 'Total: <strong>'+tk.toFixed(0)+' kWh</strong> consumed, <strong>LKR '+Math.round(tc).toLocaleString()+'</strong> cost<br>Active breakers: '+br.length+'<br>Top 3 use '+t3p.toFixed(1)+'% of total:<br>'+t3.map(function(b,i){return (i+1)+'. '+b+': '+bt[b].kwh.toFixed(0)+' kWh';}).join('<br>');}
-  if(q.match(/cost|price|lkr/)){
-    return 'Cost breakdown:<br><strong>LKR '+Math.round(tc).toLocaleString()+'</strong> total<br><br>'+br.slice(0,6).map(function(b,i){return (i+1)+'. '+b+': LKR '+Math.round(bt[b].cost).toLocaleString()+' ('+(bt[b].kwh/tk*100).toFixed(1)+'%)';}).join('<br>');}
+    return "Total for selected period:<br><strong>"+tk.toFixed(0)+" kWh</strong> consumed<br><strong>LKR "+Math.round(tc).toLocaleString()+"</strong> total cost<br>"+br.length+" active breakers<br><br>Top 3 consumers ("+t3p.toFixed(1)+"% of total):<br>"+t3.map(function(b,i){return (i+1)+". "+b+": "+bt[b].kwh.toFixed(0)+" kWh — LKR "+Math.round(bt[b].cost).toLocaleString();}).join("<br>");}
+
   if(q.match(/waste|loss|problem|issue/)){
     var w=br.filter(function(b){return bt[b].kwh/tk>0.2;});
-    if(w.length){return 'High consumption detected:<br>'+w.map(function(b){return '&#9888; <strong>'+b+'</strong> uses '+(bt[b].kwh/tk*100).toFixed(1)+'% of total. Check if running during non-production hours.';}).join('<br><br>')+'<br><br>Tip: Shift to off-peak (22-09h) to save LKR '+Math.round(tc*0.15).toLocaleString()+'.';}
-    return 'No major waste patterns detected.';}
-  if(q.match(/compar|rank|all/)){
-    return 'All breakers ranked:<br><br>'+br.map(function(b,i){var p=(bt[b].kwh/tk*100),c=p>30?'color:#E05555':p>15?'color:#E8924F':'color:#4CAF7D';return '<span style="'+c+'">'+(i+1)+'.</span> <strong>'+b+'</strong>: '+bt[b].kwh.toFixed(0)+' kWh &middot; <span style="'+c+'">'+p.toFixed(1)+'%</span>';}).join('<br>');}
+    if(w.length){return "<strong>High consumption detected:</strong><br><br>"+w.map(function(b){return "&#9888; <strong>"+b+"</strong> — "+(bt[b].kwh/tk*100).toFixed(1)+"% of total ("+bt[b].kwh.toFixed(0)+" kWh). Check if running during non-production hours.";}).join("<br><br>")+"<br><br><strong>Potential saving:</strong> LKR "+Math.round(tc*0.15).toLocaleString()+" by shifting to off-peak hours.";}
+    return "No major waste patterns detected. All breakers within expected ranges.";}
+
+  if(q.match(/compar|rank|all breaker/)){
+    return "All breakers ranked:<br><br>"+br.map(function(b,i){var p=(bt[b].kwh/tk*100),c=p>30?"color:#E05555":p>15?"color:#E8924F":"color:#4CAF7D";return "<span style=\""+c+"\">"+(i+1)+".</span> <strong>"+b+"</strong>: "+bt[b].kwh.toFixed(0)+" kWh &middot; LKR "+Math.round(bt[b].cost).toLocaleString()+" &middot; <span style=\""+c+"\">"+p.toFixed(1)+"%</span>";}).join("<br>");}
+
   if(q.match(/peak|tariff|off.peak|rate/)){
-    return 'Estimated cost by tariff:<br><span style="color:#E05555">Peak (17-22h): LKR '+Math.round(tc*0.3).toLocaleString()+'</span><br><span style="color:#C9A347">Day (09-17h): LKR '+Math.round(tc*0.4).toLocaleString()+'</span><br><span style="color:#4CAF7D">Off-Peak: LKR '+Math.round(tc*0.3).toLocaleString()+'</span><br><br>Shifting to off-peak saves up to 58% per unit.';}
-  if(q.match(/recommend|suggest|save|reduce|cost|how to|action|plan/)){
-    var peakSave=Math.round(tc*0.28);
-    var idleSave=Math.round(tc*0.08);
-    var totalSave=peakSave+idleSave;
-    return '<strong>Full Cost Reduction Action Plan</strong><br><br>'+
-    '<strong>Current Situation:</strong><br>'+
-    'Total cost: LKR '+Math.round(tc).toLocaleString()+' for this period<br>'+
-    'Highest load: '+top+' ('+((topK/tk)*100).toFixed(1)+'% of total)<br><br>'+
-    '<strong>Action 1 \u2014 Shift to Off-Peak Hours</strong><br>'+
-    'Move heavy loads to 22:00\u201309:00 (Off-Peak rate LKR 16.50/kWh vs Peak LKR 39/kWh)<br>'+
-    'Breakers to shift: '+br.slice(0,3).join(', ')+'<br>'+
-    'Estimated saving: <strong>LKR '+peakSave.toLocaleString()+'</strong><br><br>'+
-    '<strong>Action 2 \u2014 Switch Off During Non-Production Hours</strong><br>'+
-    'Turn off '+br.slice(0,2).join(' and ')+' when factory is not running<br>'+
-    'Estimated saving: <strong>LKR '+idleSave.toLocaleString()+'</strong><br><br>'+
-    '<strong>Action 3 \u2014 Avoid Peak Period (17:00\u201322:00)</strong><br>'+
-    'Schedule high-energy tasks before 17:00 or after 22:00<br>'+
-    'Cost difference: LKR 39 vs LKR 16.50 per kWh (saves 58%)<br><br>'+
-    '<strong>Total Potential Monthly Saving: LKR '+totalSave.toLocaleString()+'</strong><br><br>'+
-    'Priority: Start with '+top+' as it uses '+(topK/tk*100).toFixed(1)+'% of total energy.';}
-  return 'S&D Summary: <strong>'+tk.toFixed(0)+' kWh</strong> &middot; <strong>LKR '+Math.round(tc).toLocaleString()+'</strong><br>Highest: '+top+' ('+(topK/tk*100).toFixed(1)+'%)<br><br>Ask me: "Which breaker uses most?" &bull; "Where is waste?" &bull; "Compare all breakers" &bull; "Reduce costs"';
+    return "Lanka Electricity Company tariff cost estimate:<br><br><span style=\"color:#E05555\">&#9632; Peak (17:00-22:00): LKR "+Math.round(tc*0.3).toLocaleString()+" at LKR 39/kWh</span><br><span style=\"color:#C9A347\">&#9632; Day (09:00-17:00): LKR "+Math.round(tc*0.4).toLocaleString()+" at LKR 19/kWh</span><br><span style=\"color:#4CAF7D\">&#9632; Off-Peak (22:00-09:00): LKR "+Math.round(tc*0.3).toLocaleString()+" at LKR 16.50/kWh</span><br><br>Shifting loads from peak to off-peak saves <strong>58% per unit</strong>.";}
+
+  if(q.match(/reduce|recommend|suggest|save|saving|how to|action|plan|lower|cut/)){
+    return "<strong>Full Cost Reduction Action Plan</strong><br><br>"+
+    "<strong>Current Situation:</strong><br>"+
+    "Total: LKR "+Math.round(tc).toLocaleString()+" &middot; "+tk.toFixed(0)+" kWh<br>"+
+    "Highest load: "+top+" ("+(topK/tk*100).toFixed(1)+"% of total)<br><br>"+
+    "<strong>&#9312; Shift to Off-Peak Hours (22:00-09:00)</strong><br>"+
+    "Off-Peak rate is LKR 16.50/kWh vs Peak LKR 39/kWh — 58% cheaper<br>"+
+    "Breakers to shift first: "+br.slice(0,3).join(", ")+"<br>"+
+    "Estimated saving: <strong>LKR "+peakSave.toLocaleString()+"</strong><br><br>"+
+    "<strong>&#9313; Switch Off During Non-Production Hours</strong><br>"+
+    "Turn off "+br.slice(0,2).join(" and ")+" when factory is idle<br>"+
+    "Estimated saving: <strong>LKR "+idleSave.toLocaleString()+"</strong><br><br>"+
+    "<strong>&#9314; Avoid Peak Period (17:00-22:00)</strong><br>"+
+    "Schedule all heavy tasks before 17:00 or after 22:00<br>"+
+    "Start production early (before 17:00) and pause at 17:00<br><br>"+
+    "<strong>&#9315; Monitor Top 3 Breakers Daily</strong><br>"+
+    t3.map(function(b,i){return (i+1)+". "+b+": "+bt[b].kwh.toFixed(0)+" kWh ("+( bt[b].kwh/tk*100).toFixed(1)+"%)";}).join("<br>")+"<br><br>"+
+    "<span style=\"color:#4CAF7D\"><strong>Total Potential Saving: LKR "+totalSave.toLocaleString()+" per period</strong></span><br>"+
+    "Priority: Start with <strong>"+top+"</strong> — it drives "+(topK/tk*100).toFixed(1)+"% of your total bill.";}
+
+  return "S&D Energy Summary:<br><strong>"+tk.toFixed(0)+" kWh</strong> &middot; <strong>LKR "+Math.round(tc).toLocaleString()+"</strong><br>Highest: "+top+" ("+(topK/tk*100).toFixed(1)+"%)<br>Active breakers: "+br.length+"<br><br>Ask me:<br>&bull; How to reduce costs?<br>&bull; Which breaker uses most energy?<br>&bull; Where is energy wasted?<br>&bull; Compare all breakers<br>&bull; Peak tariff costs?";
 }
 </script>
 <style>
@@ -447,6 +454,7 @@ function analyzeQuery(q){
   </div>
 </div></body>
 </html>
+
 
 
 
