@@ -350,7 +350,7 @@ function sendAI(){
 function analyzeQuery(q){
   if(!lastData){return "Please click Load Data first, then ask me again.";}
   var bt=lastData.breaker_totals||{};
-  var br=Object.keys(bt).filter(function(b){return bt[b]&&bt[b].kwh>0;}).sort(function(a,b){return bt[b].kwh-bt[a].kwh;});
+  var br=Object.keys(bt).filter(function(b){return bt[b]&&bt[b].kwh>0&&bt[b].kwh>0.01;}).sort(function(a,b){return bt[b].kwh-bt[a].kwh;});
   if(!br.length){return "No data for selected period.";}
   var tk=br.reduce(function(s,b){return s+bt[b].kwh;},0);
   var tc=br.reduce(function(s,b){return s+bt[b].cost;},0);
@@ -454,6 +454,7 @@ function analyzeQuery(q){
   </div>
 </div></body>
 </html>
+
 
 
 
