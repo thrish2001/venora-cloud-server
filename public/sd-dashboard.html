@@ -272,7 +272,7 @@ async function loadAll(){
 }
 function renderAll(cmp,prod){
   var periods=cmp.periods,breakers=cmp.breakers,period_data=cmp.period_data,breaker_totals=cmp.breaker_totals;
-  var show=breakers.filter(function(b){return TARGET.includes(b)&&(breaker_totals[b]&&breaker_totals[b].kwh||0)>0;});
+  var show=breakers.filter(function(b){return (breaker_totals[b]&&breaker_totals[b].kwh||0)>0;});
   var sorted=[].concat(show).sort(function(a,b){return(breaker_totals[b]&&breaker_totals[b].kwh||0)-(breaker_totals[a]&&breaker_totals[a].kwh||0);});
   var totalKwh=show.reduce(function(s,b){return s+(breaker_totals[b]&&breaker_totals[b].kwh||0);},0);
   var totalCost=show.reduce(function(s,b){return s+(breaker_totals[b]&&breaker_totals[b].cost||0);},0);
@@ -454,6 +454,7 @@ function analyzeQuery(q){
   </div>
 </div></body>
 </html>
+
 
 
 
