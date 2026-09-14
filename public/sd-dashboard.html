@@ -373,8 +373,26 @@ function analyzeQuery(q){
     return 'All breakers ranked:<br><br>'+br.map(function(b,i){var p=(bt[b].kwh/tk*100),c=p>30?'color:#E05555':p>15?'color:#E8924F':'color:#4CAF7D';return '<span style="'+c+'">'+(i+1)+'.</span> <strong>'+b+'</strong>: '+bt[b].kwh.toFixed(0)+' kWh &middot; <span style="'+c+'">'+p.toFixed(1)+'%</span>';}).join('<br>');}
   if(q.match(/peak|tariff|off.peak|rate/)){
     return 'Estimated cost by tariff:<br><span style="color:#E05555">Peak (17-22h): LKR '+Math.round(tc*0.3).toLocaleString()+'</span><br><span style="color:#C9A347">Day (09-17h): LKR '+Math.round(tc*0.4).toLocaleString()+'</span><br><span style="color:#4CAF7D">Off-Peak: LKR '+Math.round(tc*0.3).toLocaleString()+'</span><br><br>Shifting to off-peak saves up to 58% per unit.';}
-  if(q.match(/recommend|suggest|save|reduce/)){
-    return '<strong>Top Recommendations:</strong><br><br>1. '+top+' uses '+(topK/tk*100).toFixed(1)+'% — check peak hour operation.<br>2. Shift loads from peak (17-22h) to off-peak. Save: LKR '+Math.round(tc*0.15).toLocaleString()+'.<br>3. Monitor top 3 breakers ('+t3p.toFixed(1)+'% of total).';}
+  if(q.match(/recommend|suggest|save|reduce|cost|how to|action|plan/)){
+    var peakSave=Math.round(tc*0.28);
+    var idleSave=Math.round(tc*0.08);
+    var totalSave=peakSave+idleSave;
+    return '<strong>Full Cost Reduction Action Plan</strong><br><br>'+
+    '<strong>Current Situation:</strong><br>'+
+    'Total cost: LKR '+Math.round(tc).toLocaleString()+' for this period<br>'+
+    'Highest load: '+top+' ('+((topK/tk)*100).toFixed(1)+'% of total)<br><br>'+
+    '<strong>Action 1 \u2014 Shift to Off-Peak Hours</strong><br>'+
+    'Move heavy loads to 22:00\u201309:00 (Off-Peak rate LKR 16.50/kWh vs Peak LKR 39/kWh)<br>'+
+    'Breakers to shift: '+br.slice(0,3).join(', ')+'<br>'+
+    'Estimated saving: <strong>LKR '+peakSave.toLocaleString()+'</strong><br><br>'+
+    '<strong>Action 2 \u2014 Switch Off During Non-Production Hours</strong><br>'+
+    'Turn off '+br.slice(0,2).join(' and ')+' when factory is not running<br>'+
+    'Estimated saving: <strong>LKR '+idleSave.toLocaleString()+'</strong><br><br>'+
+    '<strong>Action 3 \u2014 Avoid Peak Period (17:00\u201322:00)</strong><br>'+
+    'Schedule high-energy tasks before 17:00 or after 22:00<br>'+
+    'Cost difference: LKR 39 vs LKR 16.50 per kWh (saves 58%)<br><br>'+
+    '<strong>Total Potential Monthly Saving: LKR '+totalSave.toLocaleString()+'</strong><br><br>'+
+    'Priority: Start with '+top+' as it uses '+(topK/tk*100).toFixed(1)+'% of total energy.';}
   return 'S&D Summary: <strong>'+tk.toFixed(0)+' kWh</strong> &middot; <strong>LKR '+Math.round(tc).toLocaleString()+'</strong><br>Highest: '+top+' ('+(topK/tk*100).toFixed(1)+'%)<br><br>Ask me: "Which breaker uses most?" &bull; "Where is waste?" &bull; "Compare all breakers" &bull; "Reduce costs"';
 }
 </script>
@@ -429,6 +447,7 @@ function analyzeQuery(q){
   </div>
 </div></body>
 </html>
+
 
 
 
