@@ -214,7 +214,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="chart-card"><div class="ct">Breaker Summary</div><div class="cs">Total kWh and cost per breaker</div><div style="overflow-x:auto"><table class="breaker-table"><thead><tr><th>Breaker</th><th>kWh</th><th>Cost (LKR)</th><th>Share</th></tr></thead><tbody id="breakerBody"></tbody></table></div></div>
     </div>
   </div>
-  <div class="section" id="tab-production">
+    <div class="section" id="tab-breakers">
+    <div class="chart-row cr2">
+      <div class="chart-card"><div class="ct">Breaker Energy Comparison</div><div class="cs">kWh consumed per breaker</div><div style="height:280px"><canvas id="breakerChart"></canvas></div></div>
+      <div class="chart-card"><div class="ct">Breaker Summary</div><div class="cs">Total kWh and cost per breaker</div><div style="overflow-x:auto"><table class="breaker-table"><thead><tr><th>Breaker</th><th>kWh</th><th>Cost (LKR)</th><th>Share</th></tr></thead><tbody id="breakerBody"></tbody></table></div></div>
+    </div>
+  </div><div class="section" id="tab-production">
     <div class="prod-grid" id="shiftCards"></div>
     <div class="chart-row cr2">
       <div class="chart-card"><div class="ct">Daily Production</div><div class="cs">Total units produced per day</div><div style="height:200px"><canvas id="prodChart"></canvas></div></div>
@@ -454,6 +459,7 @@ function analyzeQuery(q){
   </div>
 </div></body>
 </html>
+
 
 
 
