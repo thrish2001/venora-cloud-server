@@ -267,7 +267,7 @@ async function loadAll(){
     var d1=await r1.json();
     var r2=await fetch(API+'/api/production/list?site_id='+siteId+'&from='+from+'&to='+to,{headers:hdr});
     var d2=await r2.json();
-    lastData=d1;renderAll(d1,d2);
+    lastData=d1;lastData=d1;renderAll(d1,d2);
   }catch(e){console.error(e);}
 }
 function renderAll(cmp,prod){
@@ -329,8 +329,107 @@ function renderAll(cmp,prod){
   </div>
 </div>
 
-</body>
+<script>
+var aiOpen=false,aiThink=false,lastData=null;
+function toggleAI(){aiOpen=!aiOpen;document.getElementById('aiPanel').classList.toggle('open',aiOpen);if(aiOpen)document.getElementById('aiInp').focus();}
+function aiKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI();}}
+function askSug(btn){document.getElementById('aiInp').value=btn.textContent;sendAI();}
+function addMsg(role,html){var m=document.getElementById('aiMsgs');var d=document.createElement('div');d.className='ai-msg '+role;d.innerHTML='<div class="ai-bbl">'+html+'</div>';m.appendChild(d);m.scrollTop=m.scrollHeight;}
+function sendAI(){
+  if(aiThink)return;
+  var inp=document.getElementById('aiInp');var q=inp.value.trim();if(!q)return;
+  inp.value='';addMsg('user',q);
+  aiThink=true;document.getElementById('aiSend').disabled=true;
+  document.getElementById('aiTyp').classList.add('show');
+  setTimeout(function(){
+    document.getElementById('aiTyp').classList.remove('show');
+    addMsg('ai',analyzeQuery(q.toLowerCase()));
+    aiThink=false;document.getElementById('aiSend').disabled=false;
+  },700);
+}
+function analyzeQuery(q){
+  if(!lastData){return 'Please click Load Data first, then ask me again.';}
+  var bt=lastData.breaker_totals||{};
+  var br=Object.keys(bt).filter(function(b){return bt[b]&&bt[b].kwh>0;}).sort(function(a,b){return bt[b].kwh-bt[a].kwh;});
+  if(!br.length){return 'No data for selected period.';}
+  var tk=br.reduce(function(s,b){return s+bt[b].kwh;},0);
+  var tc=br.reduce(function(s,b){return s+bt[b].cost;},0);
+  var top=br[0],topK=bt[top].kwh,topC=bt[top].cost;
+  var low=br[br.length-1],lowK=bt[low].kwh;
+  var t3=br.slice(0,3),t3p=t3.reduce(function(s,b){return s+(bt[b].kwh/tk*100);},0);
+  if(q.match(/highest|most|top|largest/)){
+    return '<strong>'+top+'</strong> is the highest consumer at <strong>'+topK.toFixed(0)+' kWh</strong> (LKR '+Math.round(topC).toLocaleString()+') — '+(topK/tk*100).toFixed(1)+'% of total. Investigate if it runs during peak hours 17:00-22:00.';}
+  if(q.match(/lowest|least|efficient/)){
+    return '<strong>'+low+'</strong> is the lowest at <strong>'+lowK.toFixed(0)+' kWh</strong> ('+(lowK/tk*100).toFixed(1)+'%) — operating efficiently.';}
+  if(q.match(/total|overall|summary|how much/)){
+    return 'Total: <strong>'+tk.toFixed(0)+' kWh</strong> consumed, <strong>LKR '+Math.round(tc).toLocaleString()+'</strong> cost<br>Active breakers: '+br.length+'<br>Top 3 use '+t3p.toFixed(1)+'% of total:<br>'+t3.map(function(b,i){return (i+1)+'. '+b+': '+bt[b].kwh.toFixed(0)+' kWh';}).join('<br>');}
+  if(q.match(/cost|price|lkr/)){
+    return 'Cost breakdown:<br><strong>LKR '+Math.round(tc).toLocaleString()+'</strong> total<br><br>'+br.slice(0,6).map(function(b,i){return (i+1)+'. '+b+': LKR '+Math.round(bt[b].cost).toLocaleString()+' ('+(bt[b].kwh/tk*100).toFixed(1)+'%)';}).join('<br>');}
+  if(q.match(/waste|loss|problem|issue/)){
+    var w=br.filter(function(b){return bt[b].kwh/tk>0.2;});
+    if(w.length){return 'High consumption detected:<br>'+w.map(function(b){return '&#9888; <strong>'+b+'</strong> uses '+(bt[b].kwh/tk*100).toFixed(1)+'% of total. Check if running during non-production hours.';}).join('<br><br>')+'<br><br>Tip: Shift to off-peak (22-09h) to save LKR '+Math.round(tc*0.15).toLocaleString()+'.';}
+    return 'No major waste patterns detected.';}
+  if(q.match(/compar|rank|all/)){
+    return 'All breakers ranked:<br><br>'+br.map(function(b,i){var p=(bt[b].kwh/tk*100),c=p>30?'color:#E05555':p>15?'color:#E8924F':'color:#4CAF7D';return '<span style="'+c+'">'+(i+1)+'.</span> <strong>'+b+'</strong>: '+bt[b].kwh.toFixed(0)+' kWh &middot; <span style="'+c+'">'+p.toFixed(1)+'%</span>';}).join('<br>');}
+  if(q.match(/peak|tariff|off.peak|rate/)){
+    return 'Estimated cost by tariff:<br><span style="color:#E05555">Peak (17-22h): LKR '+Math.round(tc*0.3).toLocaleString()+'</span><br><span style="color:#C9A347">Day (09-17h): LKR '+Math.round(tc*0.4).toLocaleString()+'</span><br><span style="color:#4CAF7D">Off-Peak: LKR '+Math.round(tc*0.3).toLocaleString()+'</span><br><br>Shifting to off-peak saves up to 58% per unit.';}
+  if(q.match(/recommend|suggest|save|reduce/)){
+    return '<strong>Top Recommendations:</strong><br><br>1. '+top+' uses '+(topK/tk*100).toFixed(1)+'% — check peak hour operation.<br>2. Shift loads from peak (17-22h) to off-peak. Save: LKR '+Math.round(tc*0.15).toLocaleString()+'.<br>3. Monitor top 3 breakers ('+t3p.toFixed(1)+'% of total).';}
+  return 'S&D Summary: <strong>'+tk.toFixed(0)+' kWh</strong> &middot; <strong>LKR '+Math.round(tc).toLocaleString()+'</strong><br>Highest: '+top+' ('+(topK/tk*100).toFixed(1)+'%)<br><br>Ask me: "Which breaker uses most?" &bull; "Where is waste?" &bull; "Compare all breakers" &bull; "Reduce costs"';
+}
+</script>
+<style>
+.ai-fab{position:fixed;bottom:28px;right:28px;z-index:1000;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#0099A8,#00C8D4);border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,200,212,.4);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s}
+.ai-fab:hover{transform:scale(1.08)}
+.ai-panel{position:fixed;bottom:94px;right:28px;z-index:1000;width:370px;height:500px;background:#0C1018;border:1px solid #192030;border-radius:16px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.7);transform:scale(.92) translateY(20px);opacity:0;pointer-events:none;transition:all .25s cubic-bezier(.34,1.56,.64,1)}
+.ai-panel.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+.ai-hdr{padding:12px 14px;border-bottom:1px solid #192030;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ai-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#0099A8,#00C8D4);display:flex;align-items:center;justify-content:center;font-size:13px}
+.ai-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ai-msg{max-width:90%}.ai-msg.user{align-self:flex-end}.ai-msg.ai{align-self:flex-start}
+.ai-bbl{padding:9px 12px;border-radius:10px;font-size:11px;line-height:1.65}
+.ai-msg.user .ai-bbl{background:#0099A8;color:#fff;border-radius:10px 10px 2px 10px}
+.ai-msg.ai .ai-bbl{background:#141B2A;border:1px solid #192030;color:#C8D0E8;border-radius:10px 10px 10px 2px}
+.ai-msg.ai .ai-bbl strong{color:#00C8D4}
+.ai-typ{display:none;align-self:flex-start;padding:9px 12px;background:#141B2A;border:1px solid #192030;border-radius:10px}
+.ai-typ.show{display:flex;align-items:center;gap:4px}
+.ai-typ span{width:5px;height:5px;border-radius:50%;background:#00C8D4;animation:tdd .9s infinite}
+.ai-typ span:nth-child(2){animation-delay:.18s}.ai-typ span:nth-child(3){animation-delay:.36s}
+@keyframes tdd{0%,80%,100%{opacity:.4;transform:scale(1)}40%{opacity:1;transform:scale(1.3)}}
+.ai-sugs{padding:0 12px 8px;display:flex;flex-wrap:wrap;gap:5px}
+.ai-sug{background:#141B2A;border:1px solid #192030;border-radius:20px;padding:4px 9px;font-size:10px;color:#8890B0;cursor:pointer;font-family:'Inter',sans-serif}
+.ai-sug:hover{border-color:#00C8D4;color:#00C8D4}
+.ai-inp-row{padding:8px 12px;border-top:1px solid #192030;display:flex;gap:7px;flex-shrink:0}
+.ai-inp{flex:1;background:#141B2A;border:1px solid #192030;border-radius:9px;padding:8px 11px;font-size:11px;color:#E8EBF5;outline:none;font-family:'Inter',sans-serif;resize:none;height:36px}
+.ai-inp:focus{border-color:#0099A8}
+.ai-inp::placeholder{color:#3A4560}
+.ai-send{background:linear-gradient(135deg,#0099A8,#00C8D4);border:none;border-radius:9px;width:36px;height:36px;cursor:pointer;color:#000;font-size:14px;flex-shrink:0}
+.ai-send:disabled{opacity:.4}
+</style><button class="ai-fab" onclick="toggleAI()">&#9889;</button>
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-hdr">
+    <div class="ai-av">&#9889;</div>
+    <div style="flex:1"><div style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#E8EBF5">Energy AI Agent</div><div style="font-size:9px;color:#4CAF7D">Online</div></div>
+    <button style="background:none;border:none;color:#5A6280;cursor:pointer;font-size:18px" onclick="toggleAI()">&#x2715;</button>
+  </div>
+  <div class="ai-msgs" id="aiMsgs">
+    <div class="ai-msg ai"><div class="ai-bbl">Hello! I am your S&amp;D Energy Agent. Load data then ask me about your breakers, costs, or waste. No internet needed!</div></div>
+  </div>
+  <div class="ai-typ" id="aiTyp"><span></span><span></span><span></span></div>
+  <div class="ai-sugs">
+    <button class="ai-sug" onclick="askSug(this)">Highest consumer?</button>
+    <button class="ai-sug" onclick="askSug(this)">Total cost?</button>
+    <button class="ai-sug" onclick="askSug(this)">Where is waste?</button>
+    <button class="ai-sug" onclick="askSug(this)">Compare all breakers</button>
+    <button class="ai-sug" onclick="askSug(this)">How to reduce costs?</button>
+  </div>
+  <div class="ai-inp-row">
+    <textarea class="ai-inp" id="aiInp" placeholder="Ask about your energy data..." onkeydown="aiKey(event)"></textarea>
+    <button class="ai-send" id="aiSend" onclick="sendAI()">&#9658;</button>
+  </div>
+</div></body>
 </html>
+
 
 
 
